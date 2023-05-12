@@ -1,0 +1,134 @@
+'' =================================================================================================
+''
+''   File....... isp_quad_encoder_wbtn.spin2
+''   Purpose.... provide access to rotary values and button press
+''   Authors.... Stephen M Moraco
+''               -- Copyright (c) 2023 Iron Sheep Productions, LLC
+''               -- see below for terms of use
+''   E-mail..... stephen@ironsheep.biz
+''   Started.... May 2023
+''   Updated.... 12 May 2023
+''
+'' =================================================================================================
+''
+
+CON { timing }
+
+  CLK_FREQ = 300_000_000                                        ' system freq as a constant
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+CON { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+CON { app io pins }
+
+    PINS_QUAD_ENC = 0 addpins 2 ' pins 0,1,2
+
+    PIN_QUAD_BTN = 0
+    PIN_QUAD_ENC0 = 1
+    PIN_QUAD_ENC1 = 2
+
+CON { app constants }
+
+    ENC_STACK_SIZE_LONGS = 64
+
+VAR
+
+    LONG    position
+    LONG    encBits
+    LONG    encStack[ENC_STACK_SIZE_LONGS]
+
+PUB main()
+
+    'debug(`term term1 size 5 2 textsize 42 color blue)
+    'debug(`term term2 size 20 2 textsize 42 color yellow)
+
+    cogspin(NewCog, Encoder(), @encStack)
+
+    repeat
+        'debug(`term1 '`(position/4)' 10)    ' 10 == NewLine
+        'debug(`term2 'bits=`%(encBits)' 10)    ' 10 == NewLine
+        waitms(200)
+        if ina.[PIN_QUAD_BTN] == 0  ' Q: btn pressed? (no debounce)
+            position~
+
+VAR
+
+    long    sampleCt
+
+PRI Encoder()
+'' read quad encoder signles on pins 1 & 2, update postion based on change
+    position := 0
+    encBits := -1
+    sampleCt := -1
+    encBits := getNExtEncValueNot(encBits)
+    repeat
+        case encBits
+            %00:
+                encBits := getNExtEncValueNot(encBits)
+                if encBits == %01
+                    position--
+                elseif encBits == %10
+                    position++
+            %01:
+                encBits := getNExtEncValueNot(encBits)
+                if encBits == %11
+                    position--
+                elseif encBits == %00
+                    position++
+            %10:
+                encBits := getNExtEncValueNot(encBits)
+                if encBits == %00
+                    position--
+                elseif encBits == %11
+                    position++
+            %11:
+                encBits := getNExtEncValueNot(encBits)
+                if encBits == %10
+                    position--
+                elseif encBits == %01
+                    position++
+
+pri getNExtEncValueNot(wasValue) : newValue
+    sampleCt++
+    repeat
+        newValue := ina.[PIN_QUAD_ENC1..PIN_QUAD_ENC0]
+    until newValue <> wasValue
+    debug("enc: #", udec_(sampleCt), " bits=", ubin_(newValue), ", ", sdec(position))
+
+CON { license }
+
+{{
+
+ -------------------------------------------------------------------------------------------------
+  MIT License
+
+  Copyright (c) 2023 Iron Sheep Productions, LLC
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+ =================================================================================================
+
+}}
