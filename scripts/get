@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SRC_SPIN_DIR=/Users/stephen/Library/CloudStorage/Dropbox/PropV2-Shared/Projects/P2-mult-servo-exercisorSW
+DST_SPIN_DIR="/Users/stephen/Projects/Projects-ExtGit/IronSheepProductionsLLC/Projects P2/P2-mult-servo/P2-mult-servo-exerciser"
+
+if [ ! -d "${SRC_SPIN_DIR}" ]; then
+    echo "${SCRIPT} Missing source dir [${SRC_SPIN_DIR}]" >&2
+    exit 1
+fi
+
+if [ ! -d "${DST_SPIN_DIR}" ]; then
+    echo "${SCRIPT} Missing dest dir [${DST_SPIN_DIR}]" >&2
+    exit 1
+fi
+
+(set -x;cp -p "${SRC_SPIN_DIR}"/*.spin2 "${DST_SPIN_DIR}")
