@@ -13,24 +13,30 @@
 
 CON { timing }
 
-  CLK_FREQ = 270_000_000                                        ' system freq as a constant
-  _clkfreq = CLK_FREQ                                           ' set system clock
+    CLK_FREQ = 270_000_000                                        ' system freq as a constant
+    _clkfreq = CLK_FREQ                                           ' set system clock
 
 CON { fixed io pins }
 
-  RX1      = 63  { I }                                          ' programming / debug
-  TX1      = 62  { O }
+    RX1      = 63  { I }                                          ' programming / debug
+    TX1      = 62  { O }
 
-  SF_CS    = 61  { O }                                          ' serial flash
-  SF_SCK   = 60  { O }
-  SF_SDO   = 59  { O }
-  SF_SDI   = 58  { I }
+    SF_CS    = 61  { O }                                          ' serial flash
+    SF_SCK   = 60  { O }
+    SF_SDO   = 59  { O }
+    SF_SDI   = 58  { I }
 
 CON { application io pins }
 
-  QUAD_ENC_CLK = 16  { I }
-  QUAD_ENC_DAT = 17  { I }
-  QUAD_ENC_BTN = 18  { I }
+    ' NOTE: pins 14 & 15 also use 16 & 17 to determine rate of rotation
+    QUAD_ENC_CLK = 16  { I }
+    QUAD_ENC_DAT = 17  { I }
+    QUAD_ENC_BTN = 18  { I }
+
+    SRVO_OFST_MIN = 750
+    SRVO_OFST_MAX = 2250
+
+    ENC_RATE_SCALE = 4          ' 2 = 5 turns end-to-end, 4 = 3 turns end-to-end
 
 OBJ
 
@@ -38,19 +44,26 @@ OBJ
 
 DAT
     priorPosition   LONG    -1
+    deltaPosition   LONG    -1
+    desiredOffset   LONG    0
 
-PUB main() | currPosn
+PUB main() | currPosn, currRate, tmpOffset
 
     quadEnc.start(QUAD_ENC_CLK, QUAD_ENC_DAT, QUAD_ENC_BTN)
 
     repeat
         if quadEnc.isButtonPressed()
             debug("* Button Pressed")
-        currPosn := quadEnc.position()
+        currPosn, currRate := quadEnc.positionRate()
         if currPosn <> priorPosition
-            debug("* Rotary Encoder at ", sdec_(currPosn))
+            deltaPosition := currPosn - priorPosition
             priorPosition := currPosn
-        'waitms(1000)
+            debug("* Rotary Encoder at ", sdec_(currPosn), ", delta ", sdec_(deltaPosition))
+            tmpOffset := desiredOffset + (deltaPosition * currRate * 4)
+            desiredOffset := SRVO_OFST_MIN #> tmpOffset <# SRVO_OFST_MAX
+            debug("* -----  ", sdec_(desiredOffset), "  -----")
+            debug("   ")
+        waitms(250)
 
 CON { license }
 {{

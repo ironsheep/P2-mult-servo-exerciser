@@ -19,13 +19,22 @@ CON { app constants }
 VAR
 
     LONG    quadEncCog
+
     LONG    encPosition
     LONG    encPriorPosition
+    long    encSampleCt
+
+    LONG    encRate
+    LONG    encPriorRate
+    long    encRateSampleCt
+
     LONG    encBits
     LONG    encStack[ENC_STACK_SIZE_LONGS]
 
     LONG    pinEnc0
     LONG    pinEnc1
+    LONG    pinRateEnc0     ' pinEnc0 - 2
+    LONG    pinRateEnc1     ' pinEnc1 - 2
     LONG    pinEncBtn
 
 PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
@@ -39,6 +48,8 @@ PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
     pinEnc0 := lowPin
     pinEnc1 := highPin
     pinEncBtn := pnBtn
+    pinRateEnc0 := pinEnc0 - 2     ' pins for rate determination
+    pinRateEnc1 := pinEnc1 - 2
 
     debug("enc: pins [", udec_(pinEnc0), ", ", udec_(pinEnc1), "], btn pin [", udec_(pinEncBtn), "]")
 
@@ -55,59 +66,78 @@ PUB stop()
     ' disable our smart pins
     pinclear(pinEnc0)                                   ' clear any prior modes
     pinclear(pinEnc1)
+    pinclear(pinRateEnc0)                                   ' clear any prior modes
+    pinclear(pinRateEnc1)
     pinf(pinEnc0)
     pinf(pinEnc1)
+    pinf(pinRateEnc0)
+    pinf(pinRateEnc1)
 
 PUB isButtonPressed() : bIsPressed | bTmpChanged, tmpValue
-'' return T/F where T means button was pressed
+'' Return T/F where T means button was pressed
     bTmpChanged := btnChanged
     tmpValue := btnValue
     btnChanged := FALSE
     bIsPressed := bTmpChanged and tmpValue == 0
 
 PUB position() : currPosn
-'' return current quadEncoder position
+'' Return current quadEncoder position N where N=[-n < 0 < n]
     currPosn := encPosition
+
+PUB rate() : currRate
+'' Return current quadEncoder rate of rotation N where N=[0-n]
+    currRate := encRate
+
+PUB positionRate() : currPosn, currRate
+'' Return current quadEncoder position N where N=[-n < 0 < n]
+''  and current quadEncoder rate of rotation N where N=[0-n]
+    currPosn := encPosition
+    currRate := encRate
 
 VAR
 
-    long    encSampleCt
     long    btnValue
     long    btnSample
     long    btnPriorSample
     long    btnChanged
     long    btnSampleCount
 
-PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition
+PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpEncRate
 ' read quad encoder signals attached to smart pins, update postion based on change
     debug("TASK: quad enc running")
     pinclear(pinEnc0)                                   ' clear any prior modes
     pinclear(pinEnc1)
+    pinclear(pinRateEnc0)                               ' clear any prior modes
+    pinclear(pinRateEnc1)
     wrpin(pinEnc0, P_PLUS1_B | P_QUADRATURE)            ' Set Quad-Encoder mode, 2 pins
+    wrpin(pinRateEnc0, P_PLUS2_A | P_PLUS3_B | P_QUADRATURE)  ' Set Quad-Encoder mode, 2 pins - 2 smart pins below quad pins
     'sampleRate := clkfreq/ 2
-    sampleRate := 0
-    wxpin(pinEnc0, sampleRate)                          ' Set Quad-Encoder sample continuous
-    pinlow(pinEnc0)
+    wxpin(pinEnc0, 0)                                   ' Set Quad-Encoder sample: continuous
+    sampleRate := clkfreq / 4                           ' sample rate = 1/4 sec
+    wxpin(pinRateEnc0, sampleRate)                      ' Set Quad-Encoder sample: 4 Hz
+    pinlow(pinEnc0)                                     ' enable decoders
+    pinlow(pinRateEnc0)
     encPosition := 0
     encPriorPosition := -1
     encSampleCt := -1
     btnPriorSample := -1
     repeat
-        ' check rotary
-        if sampleRate == 0
-            tmpEncPosition := rdpin(pinEnc0) >> 2 signx 29 ' div by 4
-            if encPriorPosition <> tmpEncPosition
-                encSampleCt++
-                encPriorPosition := encPosition := tmpEncPosition
-                debug("TASK: enc #", udec_(encSampleCt), ", ", sdec(encPosition))
-        else
-            bDataRdy := pinr(pinEnc0)
-            if bDataRdy
-                tmpEncPosition := rdpin(pinEnc0) >> 2 signx 29 ' div by 4
-                if encPriorPosition <> tmpEncPosition
-                    encSampleCt++
-                    encPriorPosition := encPosition := tmpEncPosition
-                    debug("TASK: enc #", udec_(encSampleCt), ", ", sdec(encPosition))
+        ' check rotary - count
+        tmpEncPosition := rdpin(pinEnc0) >> 2 signx 29 ' div by 4
+        if encPriorPosition <> tmpEncPosition
+            encSampleCt++
+            encPriorPosition := encPosition := tmpEncPosition
+            debug("TASK: enc #", udec_(encSampleCt), ", ", sdec(encPosition))
+
+        ' check rotary - rate
+        bDataRdy := pinr(pinRateEnc0)
+        if bDataRdy
+            tmpEncRate := rdpin(pinRateEnc0) >> 2 signx 29 ' div by 4
+            if encPriorRate <> tmpEncRate
+                encRateSampleCt++
+                encPriorRate := tmpEncRate
+                encRate := abs tmpEncRate
+                debug("TASK: encRate #", udec_(encRateSampleCt), ", ", sdec(encRate))
 
         ' check button
         btnSample := ina.[pinEncBtn]
