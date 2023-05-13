@@ -1,7 +1,7 @@
 '' =================================================================================================
 ''
 ''   File....... isp_quad_encoder_wbtn.spin2
-''   Purpose.... provide access to rotary values and button press
+''   Purpose.... provide access to rotary values and button press (no smartpin use)
 ''   Authors.... Stephen M Moraco
 ''               -- Copyright (c) 2023 Iron Sheep Productions, LLC
 ''               -- see below for terms of use
@@ -11,29 +11,6 @@
 ''
 '' =================================================================================================
 ''
-
-CON { timing }
-
-  CLK_FREQ = 300_000_000                                        ' system freq as a constant
-  _clkfreq = CLK_FREQ                                           ' set system clock
-
-CON { fixed io pins }
-
-  RX1      = 63  { I }                                          ' programming / debug
-  TX1      = 62  { O }
-
-  SF_CS    = 61  { O }                                          ' serial flash
-  SF_SCK   = 60  { O }
-  SF_SDO   = 59  { O }
-  SF_SDI   = 58  { I }
-
-CON { app io pins }
-
-    PINS_QUAD_ENC = 0 addpins 2 ' pins 0,1,2
-
-    PIN_QUAD_BTN = 0
-    PIN_QUAD_ENC0 = 1
-    PIN_QUAD_ENC1 = 2
 
 CON { app constants }
 
@@ -45,25 +22,32 @@ VAR
     LONG    encBits
     LONG    encStack[ENC_STACK_SIZE_LONGS]
 
-PUB main()
+    LONG    pinEnc0
+    LONG    pinEnc1
+    LONG    pinEncBtn
+
+PUB start(pnEnc0, pnEnc1, pnBtn)
 
     'debug(`term term1 size 5 2 textsize 42 color blue)
     'debug(`term term2 size 20 2 textsize 42 color yellow)
+    pinEnc0 := pnEnc0
+    pinEnc1 := pnEnc1
+    pinEncBtn := pnBtn
 
-    cogspin(NewCog, Encoder(), @encStack)
+    cogspin(NewCog, TaskContinuousEncoder(), @encStack)
 
     repeat
         'debug(`term1 '`(position/4)' 10)    ' 10 == NewLine
         'debug(`term2 'bits=`%(encBits)' 10)    ' 10 == NewLine
         waitms(200)
-        if ina.[PIN_QUAD_BTN] == 0  ' Q: btn pressed? (no debounce)
+        if ina.[pinEncBtn] == 0  ' Q: btn pressed? (no debounce)
             position~
 
 VAR
 
     long    sampleCt
 
-PRI Encoder()
+PRI TaskContinuousEncoder()
 '' read quad encoder signles on pins 1 & 2, update postion based on change
     position := 0
     encBits := -1
@@ -99,7 +83,7 @@ PRI Encoder()
 pri getNExtEncValueNot(wasValue) : newValue
     sampleCt++
     repeat
-        newValue := ina.[PIN_QUAD_ENC1..PIN_QUAD_ENC0]
+        newValue := ina.[pinEnc1..pinEnc0]
     until newValue <> wasValue
     debug("enc: #", udec_(sampleCt), " bits=", ubin_(newValue), ", ", sdec(position))
 
