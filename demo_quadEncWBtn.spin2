@@ -28,14 +28,18 @@ CON { fixed io pins }
 
 CON { application io pins }
 
-    ' NOTE: pins 14 & 15 also use 16 & 17 to determine rate of rotation
-    QUAD_ENC_CLK = 16  { I }
-    QUAD_ENC_DAT = 17  { I }
-    QUAD_ENC_BTN = 18  { I }
+    ' NOTE: pins 24 & 25 also use 26 & 27 to determine rate of rotation
+    QUAD_ENC_CLK = 26  { I }
+    QUAD_ENC_DAT = 27  { I }
+    QUAD_ENC_BTN = 28  { I }
 
-    SRVO_OFST_MIN = 750
-    SRVO_OFST_MAX = 2250
+    SRVO_OFST_RANGE = 750       ' NOTE customize this to adjut servo range span
+    SRVO_OFST_CNTR = 1500
+    SRVO_OFST_MIN = SRVO_OFST_CNTR - SRVO_OFST_RANGE
+    SRVO_OFST_MAX = SRVO_OFST_CNTR + SRVO_OFST_RANGE
+    SRVO_PULSE_WIDTH_MS = 50    ' pulse width in milliSeconds
 
+    ' multiply the runtime-determined spin rate of the encoder knob
     ENC_RATE_SCALE = 4          ' 2 = 5 turns end-to-end, 4 = 3 turns end-to-end
 
 OBJ

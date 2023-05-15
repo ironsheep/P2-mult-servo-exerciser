@@ -37,6 +37,10 @@ VAR
     LONG    pinRateEnc1     ' pinEnc1 - 2
     LONG    pinEncBtn
 
+pub null()
+
+'' This is not a top-level object
+
 PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
 
     lowPin := pnEnc0 < pnEnc1 ? pnEnc0 : pnEnc1

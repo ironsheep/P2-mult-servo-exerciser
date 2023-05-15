@@ -66,6 +66,7 @@ DAT
 pub null()
 
 '' This is not a top-level object
+
 PRI record(mode, value)
     if bShowDebug
         if count < MAX_LOG_ENTRIES - 1

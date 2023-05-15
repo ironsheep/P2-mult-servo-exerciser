@@ -26,6 +26,10 @@ VAR
     LONG    pinEnc1
     LONG    pinEncBtn
 
+pub null()
+
+'' This is not a top-level object
+
 PUB start(pnEnc0, pnEnc1, pnBtn)
 
     'debug(`term term1 size 5 2 textsize 42 color blue)

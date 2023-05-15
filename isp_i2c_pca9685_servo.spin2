@@ -95,7 +95,7 @@ VAR
 OBJ
 
     pca9685     : "isp_i2c_pca9685"                     ' our 16-chan servo controller
-    term        : "isp_serial_singleton"             ' debug terminal output
+    term        : "isp_serial_singleton"                ' debug terminal output
     nstr        : "jm_nstr"                             ' number-to-string
 
 PUB null()

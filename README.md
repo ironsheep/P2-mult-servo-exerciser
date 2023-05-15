@@ -1,2 +1,2 @@
-# P2 Mult-servo Exerciser
+# P2 Multi-servo Exerciser
 Exercise/Characterize multiple servos connected via PCA9685 PWM controller
