@@ -17,25 +17,25 @@
 ' Note: Support for clock-stretching removed due to lack of use in nearly all devices
 
 
-con { fixed io pins }
+CON { fixed io pins }
 
-  RX1      = 63  { I }                                          ' programming / debug
-  TX1      = 62  { O }
+    RX1      = 63  { I }                                          ' programming / debug
+    TX1      = 62  { O }
 
-  SF_CS    = 61  { O }                                          ' serial flash
-  SF_SCK   = 60  { O }
-  SF_SDO   = 59  { O }
-  SF_SDI   = 58  { I }
+    SF_CS    = 61  { O }                                          ' serial flash
+    SF_SCK   = 60  { O }
+    SF_SDO   = 59  { O }
+    SF_SDI   = 58  { I }
 
 
-con
+CON
 
-  #0, PU_NONE, PU_1K5, PU_3K3, PU_15K                           ' pull-up options
-  #0, ACK, NAK
+    #0, PU_NONE, PU_1K5, PU_3K3, PU_15K                           ' pull-up options
+    #0, ACK, NAK
 
-  #0, MK_NOTHING, MK_START, MK_WRITE, MK_READ, MK_STOP, MK_SDA, MK_SCL
+    #0, MK_NOTHING, MK_START, MK_WRITE, MK_READ, MK_STOP, MK_SDA, MK_SCL
 
-  MAX_LOG_ENTRIES = 30
+    MAX_LOG_ENTRIES = 30
 
 OBJ
     term                : "isp_serial_singleton"                 ' terminal output
@@ -63,7 +63,7 @@ DAT
     count   WORD    0
     bShowDebug  BYTE    FALSE
 
-pub null()
+PUB null()
 
 '' This is not a top-level object
 
@@ -96,30 +96,30 @@ PRI report() | bytIndex, mode, value
                         term.fstr0(string("  {unknown??}}\r\n"))
             count := 0
 
-pub quiesce(pScl, pSda, pullup) | scl, sda
+PUB quiesce(pScl, pSda, pullup) | scl, sda
 
 '' Define I2C SCL (clock) and SDA (data) pins
 '' -- pullup controls high level drive configuration of SCL and SDA
-  sdapin := pSda
-  sclpin := pScl
+    sdapin := pSda
+    sclpin := pScl
 
-  'longmove(@scl, @sclpin, 2)
-  scl := sclpin
-  sda := sdapin
+    'longmove(@scl, @sclpin, 2)
+    scl := sclpin
+    sda := sdapin
 
-  case pullup
-    PU_NONE : pullup := P_HIGH_FLOAT                            ' use external pull-up
-    PU_1K5  : pullup := P_HIGH_1K5                              ' 1.5k
-    PU_3K3  : pullup := P_HIGH_1MA                              ' acts like ~3.3k
-    other   : pullup := P_HIGH_15K                              ' 15K
+    case pullup
+        PU_NONE : pullup := P_HIGH_FLOAT                            ' use external pull-up
+        PU_1K5  : pullup := P_HIGH_1K5                              ' 1.5k
+        PU_3K3  : pullup := P_HIGH_1MA                              ' acts like ~3.3k
+        other   : pullup := P_HIGH_15K                              ' 15K
 
-  org
+    org
                 wrpin     pullup, scl                           ' configure high drive
                 drvl      scl                                   ' clock low, LA triggers off of clock
-  end
+    end
 
 
-pub setup(pScl, pSda, khz, pullup) | scl, sda, tix
+PUB setup(pScl, pSda, khz, pullup) | scl, sda, tix
 
   count := 0
 
@@ -128,21 +128,21 @@ pub setup(pScl, pSda, khz, pullup) | scl, sda, tix
 ''    * circuit/connections will affect maximum bus speed
 '' -- pullup controls high level drive configuration of SCL and SDA
 
-  clktix := tix := (clkfreq / (khz * 1_000)) >> 2               ' calculate ticks in 1/4 period
-  sdapin := pSda
-  sclpin := pScl
-  'longmove(@scl, @sclpin, 2)
-  scl := sclpin
-  sda := sdapin
-  tix := clktix
+    clktix := tix := (clkfreq / (khz * 1_000)) >> 2               ' calculate ticks in 1/4 period
+    sdapin := pSda
+    sclpin := pScl
+    'longmove(@scl, @sclpin, 2)
+    scl := sclpin
+    sda := sdapin
+    tix := clktix
 
-  case pullup
-    PU_NONE : pullup := P_HIGH_FLOAT                            ' use external pull-up
-    PU_1K5  : pullup := P_HIGH_1K5                              ' 1.5k
-    PU_3K3  : pullup := P_HIGH_1MA                              ' acts like ~3.3k
-    other   : pullup := P_HIGH_15K                              ' 15K
+    case pullup
+        PU_NONE : pullup := P_HIGH_FLOAT                            ' use external pull-up
+        PU_1K5  : pullup := P_HIGH_1K5                              ' 1.5k
+        PU_3K3  : pullup := P_HIGH_1MA                              ' acts like ~3.3k
+        other   : pullup := P_HIGH_15K                              ' 15K
 
-  org
+    org
                 fltl      scl                                   ' clear old smart pin setup
                 fltl      sda
                 wrpin     pullup, scl                           ' configure high drive
@@ -162,39 +162,39 @@ pub setup(pScl, pSda, khz, pullup) | scl, sda, tix
                  waitx    tix
                  waitx    tix
 .done
-  end
+    end
 
 
-pub present(devid) : result
+PUB present(devid) : result
 
 '' Pings device, returns true if device on bus.
 
-  start()
+    start()
 
-  result := (write(devid) == ACK)
+    result := (write(devid) == ACK)
 
 
-pub wait(devid) | ackbit
+PUB wait(devid) | ackbit
 
 '' Waits for device to be ready for new command.
 '' -- Note: Use present() to detect device before using wait()
 
-  repeat
-    start()
-    ackbit := write(devid)
-  until (ackbit == ACK)
+    repeat
+        start()
+        ackbit := write(devid)
+    until (ackbit == ACK)
 
 
-pub start() | scl, sda, tix
+PUB start() | scl, sda, tix
 
 '' Create I2C start sequence
 '' -- will wait if I2C bus SCL pin is held low
-  scl := sclpin
-  sda := sdapin
-  tix := clktix
-  record(MK_START, 0)
+    scl := sclpin
+    sda := sdapin
+    tix := clktix
+    record(MK_START, 0)
 
-  org
+    org
                 drvh      sda                                   ' both high
                 drvh      scl
                 waitx     tix
@@ -204,19 +204,19 @@ pub start() | scl, sda, tix
 
                 drvl      scl
                 waitx     tix
-  end
+    end
 
-pub write(i2cbyte) : ackbit | scl, sda, tix
+PUB write(i2cbyte) : ackbit | scl, sda, tix
 
 '' Write byte to I2C bus
 '' -- leaves SCL low
   'longmove(@scl, @sclpin, 2)
-  scl := sclpin
-  sda := sdapin
-  tix := clktix
-  record(MK_WRITE, i2cbyte)
+    scl := sclpin
+    sda := sdapin
+    tix := clktix
+    record(MK_WRITE, i2cbyte)
 
-  org
+    org
                 shl       i2cbyte, #24                          ' align i2cbyte.[7] to i2cbyte.[31]
 
 .wr_byte        rep       #8, #8                                ' output 8 bits, msbfirst
@@ -239,20 +239,20 @@ pub write(i2cbyte) : ackbit | scl, sda, tix
                 drvl      scl                                   ' scl low
                 waitx     tix
                 waitx     tix
-  end
+    end
 
 
-pub wr_block(p_block, count) : ackbit | i2cbyte, scl, sda, tix
+PUB wr_block(p_block, bytCount) : ackbit | i2cbyte, scl, sda, tix
 
 '' Write count bytes from p_block to I2C bus
 '' -- p_block is pointer to bytes
 '' -- leaves SCL low
   'longmove(@scl, @sclpin, 2)
-  scl := sclpin
-  sda := sdapin
-  tix := clktix
+    scl := sclpin
+    sda := sdapin
+    tix := clktix
 
-  org
+    org
 .get_byte       rdbyte    i2cbyte, p_block                      ' read byte from block
                 add       p_block, #1                           ' increment block pointer
                 shl       i2cbyte, #24                          ' align i2cbyte.[7] to i2cbyte.[31]
@@ -278,21 +278,21 @@ pub wr_block(p_block, count) : ackbit | i2cbyte, scl, sda, tix
                 waitx     tix
                 waitx     tix
 
-                djnz      count, #.get_byte
-  end
+                djnz      bytCount, #.get_byte
+    end
 
 
-pub read(ackbit) : i2cbyte | scl, sda, tix
+PUB read(ackbit) : i2cbyte | scl, sda, tix
 
 '' Read byte from I2C bus
 '' -- ackbit is state of ack bit
 ''    * usually NAK for last byte read
   'longmove(@scl, @sclpin, 2)
-  scl := sclpin
-  sda := sdapin
-  tix := clktix
+    scl := sclpin
+    sda := sdapin
+    tix := clktix
 
-  org
+    org
                 drvh      sda                                   ' pull-up sda
 
 .rd_byte        rep       #9, #8                                ' read 8 bits, msb first
@@ -315,22 +315,22 @@ pub read(ackbit) : i2cbyte | scl, sda, tix
                 drvl      scl                                   ' scl low
                 waitx     tix
                 waitx     tix
-  end
-  record(MK_READ, i2cbyte)
+    end
+    record(MK_READ, i2cbyte)
 
 
-pub rd_block(p_block, count, ackbit) | i2cbyte
+PUB rd_block(p_block, bytCount, ackbit) | i2cbyte, sda, scl, tix
 
 '' Read count bytes from I2C bus
 '' -- p_block is pointer to storage location for bytes
 '' -- ackbit is state of ack for final byte read
   'longmove(@scl, @sclpin, 2)
-  scl := sclpin
-  sda := sdapin
-  tix := clktix
+    scl := sclpin
+    sda := sdapin
+    tix := clktix
 
 
-  org
+    org
 .rd_block       drvh      sda                                   ' pull-up sda
                 mov       i2cbyte, #0                           ' clear workspace
 
@@ -345,7 +345,7 @@ pub rd_block(p_block, count, ackbit) | i2cbyte
                  drvl     scl                                   ' scl low
                  waitx    tix
 
-.put_ack        cmp       count, #1                     wz      ' last byte?
+.put_ack        cmp       bytCount, #1                  wz      ' last byte?
     if_nz       drvl      sda                                   ' 0 --> sda (ack) if not last byte
     if_z        testb     ackbit, #0                    wc      ' last byte, ackbit.[0] --> c
     if_z        drvc      sda                                   ' last byte, c --> sda
@@ -360,11 +360,11 @@ pub rd_block(p_block, count, ackbit) | i2cbyte
 .put_byte       wrbyte    i2cbyte, p_block                      ' write byte to block
                 add       p_block, #1                           ' increment block pointer
 
-                djnz      count, #.rd_block
-  end
+                djnz      bytCount, #.rd_block
+    end
 
 
-pub stop() | scl, sda, tix
+PUB stop() | scl, sda, tix
 
 '' Create I2C stop sequence
 '' -- allows for clock stretch
@@ -373,16 +373,16 @@ pub stop() | scl, sda, tix
   tix := clktix
   record(MK_STOP, 0)
 
-  org
+    org
                 drvl      sda                                   ' hold sda low
                 drvh      scl                                   ' release scl
                 waitx     tix
                 drvh      sda                                   ' finish stop sequence
-  end
+    end
   report()
 
 
-con { license }
+CON { license }
 
 {{
 
