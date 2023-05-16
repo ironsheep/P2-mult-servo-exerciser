@@ -860,7 +860,7 @@ PUB updateDotMatrixWidget(matrixIndex, pString) : bDidSucceed | string_to_write
         }
         check_argument_value(@"matrix_index", matrixIndex, RTE_UINT16)
 
-        debug("Updating DotMatrix ", udec_word_(matrixIndex), " ...")
+        'debug("Updating DotMatrix ", udec_word_(matrixIndex), " ...")
 
         write_command(MATES_CMD_UPDATE_DOT_MATRIX)
         write_int16(matrixIndex)

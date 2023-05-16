@@ -16,6 +16,8 @@ CON { app constants }
 
     ENC_STACK_SIZE_LONGS = 64
 
+    NOT_SET = -1
+
 VAR
 
     LONG    quadEncCog
@@ -23,6 +25,13 @@ VAR
     LONG    encPosition
     LONG    encPriorPosition
     long    encSampleCt
+
+    LONG    btnPressCount
+
+    ' values from TASK for BUTTON press
+    LONG    taskPressCount
+    LONG    taskPressSampleNbr
+    LONG    priorPressSampleNbr
 
     LONG    encRate
     LONG    encPriorRate
@@ -42,13 +51,12 @@ pub null()
 '' This is not a top-level object
 
 PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
-
     lowPin := pnEnc0 < pnEnc1 ? pnEnc0 : pnEnc1
     highPin := pnEnc0 < pnEnc1 ? pnEnc1 : pnEnc0
     if lowPin + 1 <> highPin
         debug("enc: pins must be adjacent! (", udec_(lowPin), ") and (", udec_(highPin), ") are not!  Aborting")
         Abort
-
+    priorPressSampleNbr := 0
     pinEnc0 := lowPin
     pinEnc1 := highPin
     pinEncBtn := pnBtn
@@ -76,13 +84,20 @@ PUB stop()
     pinf(pinEnc1)
     pinf(pinRateEnc0)
     pinf(pinRateEnc1)
+    pinclear(pinEncBtn)
+    pinf(pinEncBtn)
 
-PUB isButtonPressed() : bIsPressed | bTmpChanged, tmpValue
-'' Return T/F where T means button was pressed
-    bTmpChanged := btnChanged
-    tmpValue := btnValue
-    btnChanged := FALSE
-    bIsPressed := bTmpChanged and tmpValue == 0
+PUB isButtonPressed() : bIsPressed, bIsDouble | tmpPressSampleNbr, tmpPressCt
+'' Return {bIsPressed} - T/F where T means button was pressed
+'' .  and {timeSinceMS} - time in mSec since last press
+    tmpPressSampleNbr := taskPressSampleNbr
+    tmpPressCt := taskPressCount
+    if priorPressSampleNbr <>  tmpPressSampleNbr
+        bIsPressed := (tmpPressCt > 0) ? TRUE : FALSE
+        bIsDouble := (tmpPressCt > 1) ? TRUE : FALSE
+        priorPressSampleNbr := tmpPressSampleNbr
+    else
+        bIsPressed := FALSE
 
 PUB position() : currPosn
 '' Return current quadEncoder position N where N=[-n < 0 < n]
@@ -105,8 +120,11 @@ VAR
     long    btnPriorSample
     long    btnChanged
     long    btnSampleCount
+    long    timeNowMS
+    long    priorEdgeTimeMS
+    long    timeSinceEdgeMS
 
-PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpEncRate
+PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpEncRate, lastReportTimeMS, fallingEdgeCt
 ' read quad encoder signals attached to smart pins, update postion based on change
     debug("TASK: quad enc running")
     pinclear(pinEnc0)                                   ' clear any prior modes
@@ -121,17 +139,26 @@ PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpE
     wxpin(pinRateEnc0, sampleRate)                      ' Set Quad-Encoder sample: 4 Hz
     pinlow(pinEnc0)                                     ' enable decoders
     pinlow(pinRateEnc0)
+
+    pinclear(pinEncBtn)                                 ' clear pin of smart mode
+    pinfloat(pinEncBtn)                                 ' reset
+    wrpin(pinEncBtn, P_HIGH_1K5)                        ' configure pull-up
+    pinfloat(pinEncBtn)                                 ' activate the pull up
+
     encPosition := 0
     encPriorPosition := -1
     encSampleCt := -1
     btnPriorSample := -1
+    lastReportTimeMS := getms()
+    fallingEdgeCt := 0
+    priorEdgeTimeMS := 0
     repeat
         ' check rotary - count
         tmpEncPosition := rdpin(pinEnc0) >> 2 signx 29 ' div by 4
         if encPriorPosition <> tmpEncPosition
             encSampleCt++
             encPriorPosition := encPosition := tmpEncPosition
-            debug("TASK: enc #", udec_(encSampleCt), ", ", sdec(encPosition))
+            'debug("TASK: enc #", udec_(encSampleCt), ", ", sdec(encPosition))
 
         ' check rotary - rate
         bDataRdy := pinr(pinRateEnc0)
@@ -141,16 +168,26 @@ PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpE
                 encRateSampleCt++
                 encPriorRate := tmpEncRate
                 encRate := abs tmpEncRate
-                debug("TASK: encRate #", udec_(encRateSampleCt), ", ", sdec(encRate))
+                'debug("TASK: encRate #", udec_(encRateSampleCt), ", ", sdec(encRate))
 
         ' check button
+        timeNowMS := getms()
+        timeSinceEdgeMS := timeNowMS - priorEdgeTimeMS
         btnSample := ina.[pinEncBtn]
-        if not btnChanged and btnPriorSample <> btnSample
-            btnValue := btnSample
-            btnPriorSample := btnSample
-            btnChanged := TRUE
+        if (btnPriorSample <> btnSample and btnSampleCount == 0) or (btnPriorSample <> btnSample and  timeSinceEdgeMS > 150)                ' > 300 mSec (debounce)
+            priorEdgeTimeMS := timeNowMS
+            debug("TASK: btn Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms")
             btnSampleCount++
-            debug("TASK: btn ", udec_(btnValue), ", #", udec_(btnSampleCount))
+            btnPriorSample := btnSample
+            if btnSample == 0
+                fallingEdgeCt++
+        if timeNowMS > lastReportTimeMS + 1200 and btnSample == 1
+            taskPressCount := fallingEdgeCt
+            taskPressSampleNbr := btnSampleCount
+            fallingEdgeCt := 0
+            lastReportTimeMS := timeNowMS
+            if taskPressCount > 0
+                debug("TASK: btn Edge Ct ", udec_(taskPressCount), ", #", udec_(btnSampleCount))
 
 CON { license }
 

@@ -77,7 +77,7 @@ DAT
    priorPosition     LONG    0
    desiredOffset     LONG    0
 
-PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset
+PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIsDouble
 
     quadEnc.start(QUAD_ENC_CLK, QUAD_ENC_DAT, QUAD_ENC_BTN)
     timi.start(TIMI_TX, TIMI_RX, TIMI_RST, TIMI_BAUD_RATE)
@@ -103,28 +103,41 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset
         timi.updateDotMatrixWidget(0, @Title0)
         updateDisplay()
         repeat
-            if quadEnc.isButtonPressed()
-                debug("* Button Pressed")
-                stateIdx++
+            bIsPressed, bIsDouble :=  quadEnc.isButtonPressed()
+            if bIsPressed
+                if bIsPressed and not bIsDouble
+                    debug("    ")
+                    debug("* FINDING ---- ", zstr_(@Title1), " = ", sdec_(servoOffset), "----")
+                    debug("    ")
+
+                debug("* Button Pressed, isDbl=", sdec_(bIsDouble))
+                stateIdx += (bIsDouble) ? -1 : +1
                 if stateIdx > 1
                     stateIdx := 0
                     servoIdx++
-                    servoOffset := SRVO_OFST_CNTR
                     if servoIdx >= MAX_SERVOS
                         servoIdx := 0
+                elseif stateIdx < 0
+                    stateIdx := 1
+                    servoIdx--
+                    if servoIdx < 0
+                        servoIdx := MAX_SERVOS - 1
+                servoOffset := SRVO_OFST_CNTR
                 updateStateDisplay()
 
             currPosn, currRate := quadEnc.positionRate()
             if currPosn <> priorPosition
                 deltaPosition := currPosn - priorPosition
                 priorPosition := currPosn
-                debug("* Rotary Encoder at ", sdec_(currPosn), ", delta ", sdec_(deltaPosition))
-                tmpOffset := desiredOffset + (deltaPosition * currRate * 4)
+                'debug("* Rotary Encoder at ", sdec_(currPosn), ", delta=", sdec_(deltaPosition), ", rate=", sdec_(currRate))
+                if currRate == 0
+                    tmpOffset := servoOffset + deltaPosition
+                else
+                    tmpOffset := servoOffset + (deltaPosition * currRate * ENC_RATE_SCALE)
                 servoOffset := SRVO_OFST_MIN #> tmpOffset <# SRVO_OFST_MAX
-                debug("* -----  ", sdec_(servoOffset), "  -----")
-                debug("   ")
+                'debug("* Offset ", sdec_(servoOffset))
+                'debug("   ")
                 updateOffsetDisplay()
-            waitms(250)
 
 
     debug("done... holding...")
@@ -137,10 +150,16 @@ PRI updateDisplay()
 PRI updateStateDisplay() | pStateTitle
     pStateTitle := genStateMsg(servoIdx, stateIdx)
     timi.updateDotMatrixWidget(1, pStateTitle)
+    updateInstruDisplay()
 
 PRI updateOffsetDisplay() | pRateMsg
     pRateMsg := rightAlignValue(servoOffset, 9)
     timi.updateDotMatrixWidget(2, pRateMsg)
+
+PRI updateInstruDisplay() | pInstruMsg, pText
+    pText := (stateIdx == 0) ? @"to 750 -" : @"to 2250 -"
+    pInstruMsg := rightAlignString(pText, 9)
+    timi.updateDotMatrixWidget(3, pInstruMsg)
 
 PRI genStateMsg(nServo, nState) : pMessage | lenBytes, pStateMsg
     pStateMsg := (nState == 0) ? @msgLOW : @msgHIGH
@@ -150,6 +169,11 @@ PRI genStateMsg(nServo, nState) : pMessage | lenBytes, pStateMsg
 PRI rightAlignValue(value, width) : pMessage | lenBytes, BYTE fmtStr[20]
     lenBytes := memstr.sFormatStr1(@fmtStr, @"\%%dd", width)
     lenBytes := memstr.sFormatStr1(@rateMsg, @fmtStr, value)
+    pMessage := @rateMsg
+
+PRI rightAlignString(pStr, width) : pMessage | lenBytes, BYTE fmtStr[20]
+    lenBytes := memstr.sFormatStr1(@fmtStr, @"\%%ds", width)
+    lenBytes := memstr.sFormatStr1(@rateMsg, @fmtStr, pStr)
     pMessage := @rateMsg
 
 CON { license }
