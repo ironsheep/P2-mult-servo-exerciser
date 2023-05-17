@@ -5,6 +5,20 @@ Exercise/Characterize multiple servos connected via PCA9685 PWM controller
 
 [![License][license-shield]](LICENSE)
 
+## Table of Contents
+
+On this Page:
+
+- [Features](#features)
+- Pictures of this project in use
+- [How to contribute](#how-to-contribute)
+
+Additional pages:
+
+- [The rotary Encoder object](./RotaryEnc.md) - Reusable object for reading rotary encoder with push button
+- [The TIMI Interface object](./TIMI.md) - Reusable object for driving all of the TIMI Displays
+- [The TIMI-130 Datasheet](./Docs/TIMI-130_Datasheet_REV1.0.pdf) 
+
 ## Exerciser with OLED display and Rotary Encoder for control
 
 Most of us playing with servos in our projects have a single servo tester:
@@ -27,6 +41,19 @@ In the end my cobbled together tester looks like this:
   <img src="./DOCs/images/controlDisplay.jpg" width="400">
 </p>
 
+And this is the tester connected to the back of the 6-servo hardware I'm characterizing:
+
+<p align="center">
+  <img src="./DOCs/images/testFixture.jpg" width="400">
+</p>
+
+Lastly, this is the output from the tester:
+
+
+<p align="center">
+  <img src="./DOCs/images/results-ang.jpg" width="400">
+</p>
+
 ### Features
 
 To use this exercisor simply connect to the PCA9685 i2c bus and run the project.
@@ -34,20 +61,9 @@ To use this exercisor simply connect to the PCA9685 i2c bus and run the project.
 - Steps through each of the servos from 0-15
 - Cycles LO and HI for each servo
 - Reminds which end of the range is currently being tested
-- Emits a debug final value for each servo tested
+- Emits (via debug_ the final LO, HI values for each servo tested.
 
-## Table of Contents
-
-On this Page:
-
-- [Features](#features)
-- [How to contribute](#how-to-contribute)
-
-Additional pages:
-
-- [Start your project using this object](DEVELOP.md) - Walks thru configuration and setup of your own project using this object
-- [Create bitmaps for display on your eINK device](./C-src)
-- [See images of all four displays working!](./Docs) There are a small number of .PDFs in the [Docs](./Docs) directory providing  detailed information on the display and controller chips
+Enjoy!
 
 ## How to Contribute
 
