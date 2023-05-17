@@ -29,11 +29,15 @@ Most of us playing with servos in our projects have a single servo tester:
 
 But when we are using a 16-channel PWM controller driving our servos we can either unplug each servo to test it or we can do something like this project! 
 
+### Bringing together the parts we need
+
 I grabbed a TIMI-130 serial attached OLED display and a rotary encoder with pushbutton feature as be my interface and I used code I already had for the PCA9685 controller.  
 
 I then wrote a driver for the encoder which provided distance and velocity for the turning part a single, double-click for the push button part. [See RotaryEncoder page](./RotaryEnc.md)
 
 Then I created a single TIMI interface object by porting the python TIMI library. Now I can drive the display. [See TIMI Displays page](./TIMI.md)
+
+### Using the tester
 
 In the end my cobbled together tester looks like this:
 
@@ -76,7 +80,7 @@ This is a project supporting our P2 Development Community. Please feel free to c
 
 > If you like my work and/or this has helped you in some way then feel free to help me out for a couple of :coffee:'s or :pizza: slices!
 >
-> [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep) &nbsp;&nbsp; -OR- &nbsp;&nbsp; [![Patreon](.DOCs/images/patreon.png)](https://www.patreon.com/IronSheep?fan_landing=true)[Patreon.com/IronSheep](https://www.patreon.com/IronSheep?fan_landing=true)
+> [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep) &nbsp;&nbsp; -OR- &nbsp;&nbsp; [![Patreon](./DOCs/images/patreon.png)](https://www.patreon.com/IronSheep?fan_landing=true)[Patreon.com/IronSheep](https://www.patreon.com/IronSheep?fan_landing=true)
 
 ---
 
@@ -92,7 +96,7 @@ This is a project supporting our P2 Development Community. Please feel free to c
 
 ## License
 
-Copyright © 2022 Iron Sheep Productions, LLC. All rights reserved.
+Copyright © 2023 Iron Sheep Productions, LLC. All rights reserved.
 
 Licensed under the MIT License.
 
