@@ -176,7 +176,7 @@ PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpE
         btnSample := ina.[pinEncBtn]
         if (btnPriorSample <> btnSample and btnSampleCount == 0) or (btnPriorSample <> btnSample and  timeSinceEdgeMS > 150)                ' > 300 mSec (debounce)
             priorEdgeTimeMS := timeNowMS
-            debug("TASK: btn Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms")
+            'debug("TASK: btn Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms")
             btnSampleCount++
             btnPriorSample := btnSample
             if btnSample == 0
@@ -186,8 +186,8 @@ PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpE
             taskPressSampleNbr := btnSampleCount
             fallingEdgeCt := 0
             lastReportTimeMS := timeNowMS
-            if taskPressCount > 0
-                debug("TASK: btn Edge Ct ", udec_(taskPressCount), ", #", udec_(btnSampleCount))
+            'if taskPressCount > 0
+                'debug("TASK: btn Edge Ct ", udec_(taskPressCount), ", #", udec_(btnSampleCount))
 
 CON { license }
 

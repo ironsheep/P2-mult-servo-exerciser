@@ -55,9 +55,9 @@ CON { application io pins }
     TIMI_PAGEID_NET_MTR = 3
 
     ' the PCA9685 with attached servos
-    PCA_OE = 8
-    PCA_SCL = 9
-    PCA_SDA = 10
+    PCA9685_OE = 8
+    PCA9685_SCL = 9
+    PCA9685_SDA = 10
 
 OBJ
 
@@ -69,6 +69,7 @@ OBJ
 DAT
 
    servoIdx     LONG    0
+   servoInvertIdx     LONG    0
    servoOffset  LONG    1500
    stateIdx     LONG    0
 
@@ -91,7 +92,7 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
     timi.start(TIMI_TX, TIMI_RX, TIMI_RST, TIMI_BAUD_RATE)
 
     ' start our output set of servos
-    pcaServos.init(PCA_SCL, PCA_SDA, PCA_OE)
+    pcaServos.init(PCA9685_SCL, PCA9685_SDA, PCA9685_OE)
     pcaServos.enableOutput(FALSE)
 
     '  interfae prototype
@@ -100,7 +101,7 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
     '  current effort is shown on the TIMI display
 
     ' connect to servos
-    bDevicePresent := pcaServos.start(PCA_SCL, PCA_SDA, PCA_OE)
+    bDevicePresent := pcaServos.start(PCA9685_SCL, PCA9685_SDA, PCA9685_OE)
     if bDevicePresent
         debug("* connected to PCA9685")
         pcaServos.configureController()
@@ -109,8 +110,13 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
         ' center our servos
         pcaServos.setAllServos(SRVO_OFST_CNTR)
 
+        debug("* all servos PWMing.... 1500 uSec...")
+
+        'debug("* all servos PWMing.... 1500 uSec, holding")
+        'repeat
+
     debug("  ")
-    debug("test... ")
+    'debug("test... ")
 
 {
     repeat pageId from 0 to 3
@@ -121,6 +127,7 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
 '}
 
     ' select the 4x LED matrix page
+    servoInvertIdx := 15 - servoIdx
     pcaServos.gotoMicroSec(servoIdx, servoOffset)
     bDidSucceed := timi.setPage(TIMI_PAGEID_LEDMTX, timi.MATES_RESPONSE_LTIMEOUT)
     if bDidSucceed
@@ -135,19 +142,22 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
                     debug("* FINDING ---- ", zstr_(@Title1), " = ", sdec_(servoOffset), "----")
                     debug("    ")
 
-                debug("* Button Pressed, isDbl=", sdec_(bIsDouble))
+                'debug("* Button Pressed, isDbl=", sdec_(bIsDouble))
                 stateIdx += (bIsDouble) ? -1 : +1
                 if stateIdx > 1
                     stateIdx := 0
+                    'pcaServos.gotoMicroSec(servoIdx, SRVO_OFST_CNTR)            ' reset to center as we leave
                     servoIdx++
                     if servoIdx >= MAX_SERVOS
                         servoIdx := 0
                 elseif stateIdx < 0
                     stateIdx := 1
+                    'pcaServos.gotoMicroSec(servoIdx, SRVO_OFST_CNTR)            ' reset to center as we leave
                     servoIdx--
                     if servoIdx < 0
                         servoIdx := MAX_SERVOS - 1
                 servoOffset := SRVO_OFST_CNTR
+                servoInvertIdx := 15 - servoIdx
                 updateStateDisplay()
 
             currPosn, currRate := quadEnc.positionRate()

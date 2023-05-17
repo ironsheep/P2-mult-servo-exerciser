@@ -33,37 +33,54 @@ con { PCA9685 configuration info }
     FREQ_PCA9685_I2C       = 150                ' 400 kHz max
 
     ' pull-up options: PU_NONE, PU_1K5, PU_3K3, PU_15K
+    'PULL_UP_PCA9685_I2C    = i2c_bus.PU_NONE    ' no pullups needed
     PULL_UP_PCA9685_I2C    = i2c_bus.PU_NONE    ' no pullups needed
+
+    '  57 -> $69 ->  60.6 Hz
+    '     -> $70 ->  56.8 Hz   <---- EYEs
+    '     -> $71 ->  56.3 Hz
 
     '  50 -> $7A ->  52.9 Hz
     '     -> $7B ->  52.5 Hz
     '     -> $7C ->  52.1 Hz
-    '     -> $7E ->  51.3 Hz
-    '     -> $80 ->  50.5 Hz
-    '     -> $81 ->  50.1 Hz   <----
+    '     -> $7E ->  50.6 Hz
+    '     -> $7F ->  50.3 Hz
+    '     -> $80 ->  49.9 Hz   <----
+    '     -> $81 ->  49.4 Hz
+    '     -> $82 ->  49.0 Hz
 
     ' 125 -> $30 -> 133.0 Hz
     '     -> $31 -> 133.2 Hz
     '     -> $33 -> 125.3 Hz   <----
     '     -> $34 -> 122.9 Hz
 
+    ' 121 -> $35 -> 117.0 Hz
+    '     -> $36 -> 117.0 Hz
+    '     -> $37 -> 114.9 Hz   <----
+    '     -> $38 -> 112.4 Hz
+
     ' 250 -> $18 -> 260.0 Hz
     '     -> $19 -> 251.0 Hz   <----
     '     -> $1A -> 242.0 Hz
 
-    'PCA9685_DESIRED_FREQ_IN_HZ = 50                ' desired Servo PWM Freq 125 Hz (better than 50 Hz and 250 Hz)
-    'PCA9685_PWM_FREQ_DIVISOR = $81                 ' Adjusted to be accurate
-    'PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 501            ' MEASURED at 50.1 Hz x 10
+    ' SPECIAL for mimic eyes arduino
+    PCA9685_DESIRED_FREQ_IN_HZ = 56                 ' desired Servo PWM Freq 56 Hz
+    PCA9685_PWM_FREQ_DIVISOR = $70                  ' Adjusted to be accurate
+    PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 568             ' MEASURED at 57.0 Hz x 10
 
-    PCA9685_DESIRED_FREQ_IN_HZ = 121               ' desired Servo PWM Freq 125 Hz (better than 50 Hz and 250 Hz)
-    PCA9685_PWM_FREQ_DIVISOR = $35                  ' Adjusted to be accurate
-    PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 1205            ' MEASURED at 120.5 Hz x 10
+    'PCA9685_DESIRED_FREQ_IN_HZ = 50                 ' desired Servo PWM Freq 50 Hz (better than 50 Hz and 250 Hz)
+    'PCA9685_PWM_FREQ_DIVISOR = $80                  ' Adjusted to be accurate
+    'PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 499             ' MEASURED at 49.9 Hz x 10
+
+    'PCA9685_DESIRED_FREQ_IN_HZ = 121                ' desired Servo PWM Freq 120 Hz (better than 50 Hz and 250 Hz)
+    'PCA9685_PWM_FREQ_DIVISOR = $35                  ' Adjusted to be accurate
+    'PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 1205            ' MEASURED at 120.5 Hz x 10
 
     'PCA9685_DESIRED_FREQ_IN_HZ = 125                ' desired Servo PWM Freq 125 Hz (better than 50 Hz and 250 Hz)
     'PCA9685_PWM_FREQ_DIVISOR = $33                  ' Adjusted to be accurate
     'PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 1253            ' MEASURED at 125.3 Hz x 10
 
-    'PCA9685_DESIRED_FREQ_IN_HZ = 250                ' desired Servo PWM Freq 125 Hz (better than 50 Hz and 250 Hz)
+    'PCA9685_DESIRED_FREQ_IN_HZ = 250                ' desired Servo PWM Freq 250 Hz (better than 50 Hz and 250 Hz)
     'PCA9685_PWM_FREQ_DIVISOR = $19                  ' Adjusted to be accurate
     'PCA9685_ACTUAL_FREQ_IN_HZ_x10 = 2510            ' MEASURED at 251.0 Hz x 10
 
@@ -144,7 +161,7 @@ con { PCA9685 constants }
     PCA9685_CHAN15_OFF_L                = $44
     PCA9685_CHAN15_OFF_H                = $45
 
-    PCA9685_ALL_LED_ON_L                = $F1     ' All LEDs or Servos
+    PCA9685_ALL_LED_ON_L                = $FA     ' All LEDs or Servos
     PCA9685_ALL_LED_ON_H                = $FB
     PCA9685_ALL_LED_OFF_L               = $FC
     PCA9685_ALL_LED_OFF_H               = $FD
@@ -315,7 +332,7 @@ PRI floatI2cPins()
         pinf(pin_sda)   ' de-assert
         'pinf(pin_oe)    ' de-assert
 
-PRI idDevice() : eDevice | bFoundAddr
+PRI idDevice() : eDevice | bFoundAddr, pFoundStr
     ' Identify the address our device is at on the i2c bus
     bFoundAddr := false
     if i2c_bus.present(((PCA9685_ADDR << 1) | $80) | MODE_WRITE)
@@ -335,9 +352,11 @@ PRI idDevice() : eDevice | bFoundAddr
 
     i2c_bus.stop()  ' ensure we are in stable state
     eDevice := eDeviceFound
+    pFoundStr := (eDeviceFound <> DVC_NOT_FOUND) ? @" " : @"NOT "
+    debug("idDevice() dvc ", zstr_(pFoundStr), "found at ", uhex_byte_(slaveAddress))
 
-PRI setPWMFrequency() | ok, old_mode
-    ' configure our device
+PRI setPWMFrequencyARM() | ok, old_mode
+    ' configure our device (6DOF ARM)
 
     ' Initialise the PCA9685 chip.
     ' The internal reference clock is 25mhz but may vary slightly with environmental conditions and
@@ -360,6 +379,30 @@ PRI setPWMFrequency() | ok, old_mode
     write9685Byte(PCA9685_MODE2, MODE2_OUTNE_NOT_ENABLED | MODE2_OUTDRV_TOTEM_POLE | MODE2_OUTCHANGE_ON_STOP | MODE2_INVRT_NOT)
     'write9685Byte(PCA9685_MODE2, MODE2_OUTNE_NOT_ENABLED | MODE2_OUTDRV_TOTEM_POLE | MODE2_OUTCHANGE_ON_STOP | MODE2_INVRT_ENABLE)
 
+PRI setPWMFrequency() | ok, old_mode
+    ' configure our device (EYEs)
+
+    ' Initialise the PCA9685 chip.
+    ' The internal reference clock is 25mhz but may vary slightly with environmental conditions and
+    ' manufacturing variances. The math herein configures PWM rate for all channels (one single rate)
+
+    ' Chip reset
+    'softwareReset()
+    'waitms(1)
+    write9685Byte(PCA9685_MODE1, 0)  ' clear values
+
+    ok, old_mode := read9685Byte(PCA9685_MODE1)
+
+    write9685Byte(PCA9685_MODE1, MODE1_SLEEP)  ' put to sleep
+
+    write9685Byte(PCA9685_PRESCALE, PCA9685_PWM_FREQ_DIVISOR)  ' set new clock rate
+
+    write9685Byte(PCA9685_MODE1, 0)  ' wake up
+
+    waitms(5)   ' 0.005 Sec for chip to settle
+
+    write9685Byte(PCA9685_MODE1, MODE1_RESTART | MODE1_AUTOINCREMENT_ENABLE | MODE1_ALLCALL_ENABLE)  ' wake
+
 PRI calcOnOffValuesForMicroSec(uSec): onValue, offValue | uSecValidated
     ' calculate register loads based on configured clock frequency of PCA9685
     uSecValidated := SERVO_MIN_LIMIT_USEC #> uSec <# SERVO_MAX_LIMIT_USEC                             ' legal uSec period for servo
@@ -375,18 +418,19 @@ PUB write9685OffOnWords(channelLoAddr, onValue, offValue) : ok | ackbit
     if bShowDebug
         ' following is more than 10ms...
         term.fstr3(string("pca- write9685OffOnWords(0x%.02x)= ON:0x%.04x / OFF:0x%.04x\r\n"), channelLoAddr, onValue, offValue)
+    'debug("write9685OffOnWords() chan=", uhex_byte_(channelLoAddr), ", onV=", uhex_word_(onValue), ", offV=", uhex_word_(offValue))
     i2c_bus.start()
     'ok := ackBit := i2c_bus.write((slaveAddress << 1) | MODE_WRITE)
     ok := ackBit := i2c_bus.write(slaveAddress | MODE_WRITE)
     ackBit := i2c_bus.write(channelLoAddr)
     ok |= ackbit
-    ackBit := i2c_bus.write(onValue.byte[0])
+    ackBit := i2c_bus.write(onValue.byte[0])            ' onL
     ok |= ackbit
-    ackBit := i2c_bus.write(onValue.byte[1])
+    ackBit := i2c_bus.write(onValue.byte[1])            ' onH
     ok |= ackbit
-    ackBit := i2c_bus.write(offValue.byte[0])
+    ackBit := i2c_bus.write(offValue.byte[0])           ' offL
     ok |= ackbit
-    ackBit := i2c_bus.write(offValue.byte[1])
+    ackBit := i2c_bus.write(offValue.byte[1])           ' offH
     ok |= ackbit
     i2c_bus.stop()
 
