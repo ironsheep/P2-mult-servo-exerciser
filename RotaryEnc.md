@@ -19,8 +19,25 @@ Additional pages:
 - [The TIMI Interface object](./TIMI.md) - Reusable object for driving all of the TIMI Displays
 - [The TIMI-130 Datasheet](./Docs/TIMI-130_Datasheet_REV1.0.pdf) 
 
+## The Hardware
+
+This object support the standard Parallax Rotary Encoder.
+
+<p align="center">
+  <img src="./DOCs/images/rotaryEncPB.jpg" width="300">
+</p>
+
 ## The Rotary Encoder object
 
+## The Object Source Code
+
+
+The following files comprise our driver source code:
+
+| Filename | Purpose | Description |
+| --- | --- | --- |
+| **Driver FILEs**
+| [isp\_quadEncWBtn_sp.spin2](isp_quadEncWBtn_sp.spin2) | DRIVER | the Rotary Encoder Driver object using smartpins
 
 ---
 

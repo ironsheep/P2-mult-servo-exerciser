@@ -38,7 +38,7 @@ The Object is contained in one file `isp_timi_mates.spin2`.
 
 ## The Source Code
 
-The following files comprise our demo and driver source code:
+The following files comprise our driver source code:
 
 | Filename | Purpose | Description |
 | --- | --- | --- |
