@@ -7,13 +7,40 @@ Exercise/Characterize multiple servos connected via PCA9685 PWM controller
 
 ## Exerciser with OLED display and Rotary Encoder for control
 
+Most of us playing with servos in our projects have a single servo tester:
+
+<p align="center">
+  <img src="./DOCs/images/singleTester.jpg" width="400">
+</p>
+
+But when we are using a 16-channel PWM controller driving our servos we can either unplug each servo to test it or we can do something like this project! 
+
+I grabbed a TIMI-130 serial attached OLED display and a rotary encoder with pushbutton feature as be my interface and I used code I already had for the PCA9685 controller.  
+
+I then wrote a driver for the encoder which provided distance and velocity for the turning part a single, double-click for the push button part. [See RotaryEncoder page](./RotaryEnc.md)
+
+Then I created a single TIMI interface object by porting the python TIMI library. Now I can drive the display. [See TIMI Displays page](./TIMI.md)
+
+In the end my cobbled together tester looks like this:
+
+<p align="center">
+  <img src="./DOCs/images/controlDisplay.jpg" width="400">
+</p>
+
 ### Features
+
+To use this exercisor simply connect to the PCA9685 i2c bus and run the project.
+
+- Steps through each of the servos from 0-15
+- Cycles LO and HI for each servo
+- Reminds which end of the range is currently being tested
+- Emits a debug final value for each servo tested
 
 ## Table of Contents
 
 On this Page:
 
-- [Driver Features](#features)
+- [Features](#features)
 - [How to contribute](#how-to-contribute)
 
 Additional pages:
