@@ -29,7 +29,7 @@ This object support the standard Parallax Rotary Encoder.
 
 This device is connected by 3 signal wires, Vcc and ground.
 
-The driver run a task in a single Cog to continuously monitor the rotation and button presses.  The driver provides the following readings:
+The driver runs a task in a single Cog which continuously monitors the rotation and button presses.  The driver provides the following readings from the attached hardware:
 
 - Rotational distance
 - Rotational velocity
