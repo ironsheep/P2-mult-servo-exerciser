@@ -1,6 +1,6 @@
 
-# P2-eInk-Click - How to contribute code you write
-Propeller 2 Object for interaction with the Mikroe eInk Click Module
+# # P2 Projects - How to contribute code you write
+How to contribute to our P2 Projects
 
 ![Project Maintenance][maintenance-shield]
 [![License][license-shield]](LICENSE)
@@ -49,7 +49,7 @@ And last but not least: Always write your commit messages in the present tense. 
 
 ## License
 
-Copyright © 2022 Iron Sheep Productions, LLC. All rights reserved.
+Copyright © 2023 Iron Sheep Productions, LLC. All rights reserved.
 
 Licensed under the MIT License.
 

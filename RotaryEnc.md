@@ -1,5 +1,5 @@
 # P2 Rotary Encoder Spin2 Object
-A reusable object written in spin2 for reading the rotary encoder with the push button feature.
+A reusable object written in spin2 for reading the rotary encoder with the push button feature. This object features reading of rotation distance and velocity while the button press logic detects single and double-clicks.
 
 ![Project Maintenance][maintenance-shield]
 
@@ -9,9 +9,9 @@ A reusable object written in spin2 for reading the rotary encoder with the push 
 
 On this Page:
 
-- [Features](#features)
-- Pictures of this project in use
-- [How to contribute](#how-to-contribute)
+- [The Hardware](#the-hardware)
+- [The Public Interface](#the-rotary-encoder-object-public-interface)
+- [The Source Code](#the-object-source-code)
 
 Additional pages:
 
@@ -27,12 +27,19 @@ This object support the standard Parallax Rotary Encoder.
   <img src="./DOCs/images/rotaryEncPB.jpg" width="300">
 </p>
 
-This 
+This device is connected by 3 signal wires, Vcc and ground.
+
+The driver run a task in a single Cog to continuously monitor the rotation and button presses.  The driver provides the following readings:
+
+- Rotational distance
+- Rotational velocity
+- Button presses
+- For each button press, if it is a single our double-press
 
 ## The Rotary Encoder object PUBLIC Interface
 
 The object **isp\_quadEncWBtn_sp.spin2.spin2** when first started fires a separate monitoring task in a Spin Cog. When you read the values you are reading the latest stored values written by the monitoring task. 
-The object provides the following methods:
+The object provides the following methods for starting up, tearing down and accessing the values read from the device:
 
 | Steering Interface | Description |
 | --- | --- |
@@ -45,7 +52,7 @@ The object provides the following methods:
 | <PRE>rate() : currRate</PRE> | Return {currPosn} the current quadEncoder position N where N=[-n < 0 < n] |
 | <PRE>position() : currPosn</PRE> | Return {currRate} the current quadEncoder steps since last rotation N where N=[0-n] |
 
-**NOTE:** this object uses 4 smart pins for the quad position decoding.  Two connected to the rotary encoder track current position, while two additional pins (at lower pin number -1 -and -2, connected to the same two inputs) which track the velocity of the rotation. The 5th pin then senses the button press events.
+**NOTE:** this object uses 4 smart pins for the quad position decoding.  Two connected to the rotary encoder which track current position, while two additional pins (at lower pin number -1 -and -2, are connected to the same two inputs) which track the velocity of the rotation. The 5th pin then senses the button press events.
 
 ## The Object Source Code
 
