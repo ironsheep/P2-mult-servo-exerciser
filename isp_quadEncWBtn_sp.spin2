@@ -94,7 +94,7 @@ PUB stop()
     pinf(pinEncBtn)
 
 PUB setScale(scaleValue)
-'' Set encoder distance scaling to {scaleValue}
+'' Set encoder distance scaling to {scaleValue} [Default: 4]
     encScale := scaleValue
 
 PUB getScale() : scaleValue

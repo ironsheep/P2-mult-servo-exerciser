@@ -32,6 +32,7 @@ This device is connected by 3 signal wires, Vcc and ground.
 The driver runs a task in a single Cog which continuously monitors the rotation and button presses.  The driver provides the following readings from the attached hardware:
 
 - Rotational distance
+- Rotational Scaled distance (*distance x velocity x scale value*)
 - Rotational velocity
 - Button presses
 - For each button press, if it is a single our double-press
@@ -46,11 +47,14 @@ The object provides the following methods for starting up, tearing down and acce
 |  **>--- CONTROL**
 | <PRE>PUB start(pnEnc0, pnEnc1, pnBtn)</PRE> | Start the sensing Cog using the given pins 
 | <PRE>PUB stop()</PRE> | Stop the sensing Cog, clear and float the pins used.
+| <PRE>PUB setScale(scaleValue)</PRE> | Set encoder distance scaling to {scaleValue}  [Default: 4]
+| <PRE>PUB getScale() : scaleValue</PRE> | Return encoder distance {scaleValue}
 |  **>--- SENSING**
 | <PRE>PUB isButtonPressed() : bIsPressed, bIsDouble</PRE> | Return {bIsPressed} - T/F where T means button was pressed </br> and {bIsDouble} - T/F where T means the press was a double press |
-| <PRE>positionRate() : currPosn, currRate</PRE> | Return {currPosn} the current quadEncoder position N where N=[-n < 0 < n] </br> and {currRate} the current quadEncoder steps since last rotation N where N=[0-n] |
-| <PRE>rate() : currRate</PRE> | Return {currPosn} the current quadEncoder position N where N=[-n < 0 < n] |
-| <PRE>position() : currPosn</PRE> | Return {currRate} the current quadEncoder steps since last rotation N where N=[0-n] |
+| <PRE>PUB position() : currPosn</PRE> | Return {currRate} the current quadEncoder steps since last rotation N where N=[0-n] |
+| <PRE>PUB positionScaled() : currScaledPosn</PRE> | Return scaled value for current quadEncoder position N where N=[-n < 0 < n]</br>AFFECTED BY: setScale(scaleValue)|
+| <PRE>PUB rate() : currRate</PRE> | Return {currPosn} the current quadEncoder position N where N=[-n < 0 < n] |
+| <PRE>PUB positionRate() : currPosn, currRate</PRE> | Return {currPosn} the current quadEncoder position N where N=[-n < 0 < n] </br> and {currRate} the current quadEncoder steps since last rotation N where N=[0-n] |
 
 **NOTE:** this object uses 4 smart pins for the quad position decoding.  Two connected to the rotary encoder which track current position, while two additional pins (at lower pin number -1 -and -2, are connected to the same two inputs) which track the velocity of the rotation. The 5th pin then senses the button press events.
 
