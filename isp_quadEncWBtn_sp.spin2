@@ -18,13 +18,16 @@ CON { app constants }
 
     NOT_SET = -1
 
-VAR
+    DEFAULT_ENC_SCALE = 4
+
+VAR ' driver variables
 
     LONG    quadEncCog
 
     LONG    encPosition
     LONG    encPriorPosition
-    long    encSampleCt
+    LONG    encSampleCt
+    LONG    encScale
 
     LONG    btnPressCount
 
@@ -35,7 +38,7 @@ VAR
 
     LONG    encRate
     LONG    encPriorRate
-    long    encRateSampleCt
+    LONG    encRateSampleCt
 
     LONG    encBits
     LONG    encStack[ENC_STACK_SIZE_LONGS]
@@ -51,11 +54,14 @@ pub null()
 '' This is not a top-level object
 
 PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
+'' Start our position and rate tracking task
     lowPin := pnEnc0 < pnEnc1 ? pnEnc0 : pnEnc1
     highPin := pnEnc0 < pnEnc1 ? pnEnc1 : pnEnc0
     if lowPin + 1 <> highPin
         debug("enc: pins must be adjacent! (", udec_(lowPin), ") and (", udec_(highPin), ") are not!  Aborting")
         Abort
+
+    encScale := DEFAULT_ENC_SCALE
     priorPressSampleNbr := 0
     pinEnc0 := lowPin
     pinEnc1 := highPin
@@ -71,7 +77,7 @@ PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
         abort
 
 PUB stop()
-    ' if our task is running stop it
+'' if our task is running stop it
     if quadEncCog
         cogstop(quadEncCog - 1)
         quadEncCog := 0
@@ -87,9 +93,17 @@ PUB stop()
     pinclear(pinEncBtn)
     pinf(pinEncBtn)
 
+PUB setScale(scaleValue)
+'' Set encoder distance scaling to {scaleValue}
+    encScale := scaleValue
+
+PUB getScale() : scaleValue
+'' Return encoder distance {scaleValue}
+    scaleValue := encScale
+
 PUB isButtonPressed() : bIsPressed, bIsDouble | tmpPressSampleNbr, tmpPressCt
 '' Return {bIsPressed} - T/F where T means button was pressed
-'' .  and {timeSinceMS} - time in mSec since last press
+''   and {bIsDouble} - T/F where T means the press was a double press
     tmpPressSampleNbr := taskPressSampleNbr
     tmpPressCt := taskPressCount
     if priorPressSampleNbr <>  tmpPressSampleNbr
@@ -103,26 +117,42 @@ PUB position() : currPosn
 '' Return current quadEncoder position N where N=[-n < 0 < n]
     currPosn := encPosition
 
+DAT ' driver class data
+    priorPosition   LONG    0
+
+PUB positionScaled() : currScaledPosn | currPosn, currRate, deltaPosition
+'' Return scaled value for current quadEncoder position N where N=[-n < 0 < n]
+    currPosn, currRate := positionRate()
+    if currPosn <> priorPosition
+        deltaPosition := currPosn - priorPosition
+        priorPosition := currPosn
+        if deltaPosition <> 0
+            if currRate <= 2
+                currScaledPosn := deltaPosition
+            else
+                currScaledPosn := deltaPosition * currRate * encScale
+            'debug("ROT: Rotary Encoder at ", sdec_(currPosn), ", delta=", sdec_(deltaPosition), ", rate=", sdec_(currRate), ", scaled=", sdec_(currScaledPosn))
+
 PUB rate() : currRate
 '' Return current quadEncoder rate of rotation N where N=[0-n]
     currRate := encRate
 
 PUB positionRate() : currPosn, currRate
-'' Return current quadEncoder position N where N=[-n < 0 < n]
-''  and current quadEncoder rate of rotation N where N=[0-n]
+'' Return {currPosn} the current quadEncoder position N where N=[-n < 0 < n]
+''  and {currRate} the current quadEncoder rate of rotation N where N=[0-n]
     currPosn := encPosition
     currRate := encRate
 
-VAR
+VAR ' TASK instance variables
 
-    long    btnValue
-    long    btnSample
-    long    btnPriorSample
-    long    btnChanged
-    long    btnSampleCount
-    long    timeNowMS
-    long    priorEdgeTimeMS
-    long    timeSinceEdgeMS
+    LONG    btnValue
+    LONG    btnSample
+    LONG    btnPriorSample
+    LONG    btnChanged
+    LONG    btnSampleCount
+    LONG    timeNowMS
+    LONG    priorEdgeTimeMS
+    LONG    timeSinceEdgeMS
 
 PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpEncRate, lastReportTimeMS, fallingEdgeCt
 ' read quad encoder signals attached to smart pins, update postion based on change

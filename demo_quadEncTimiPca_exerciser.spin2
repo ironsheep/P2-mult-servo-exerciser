@@ -87,6 +87,7 @@ DAT
 PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIsDouble, bDevicePresent
     ' start our input device
     quadEnc.start(QUAD_ENC_CLK, QUAD_ENC_DAT, QUAD_ENC_BTN)
+    quadEnc.setScale(ENC_RATE_SCALE)
 
     ' start our display device
     timi.start(TIMI_TX, TIMI_RX, TIMI_RST, TIMI_BAUD_RATE)
@@ -160,21 +161,14 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
                 servoInvertIdx := 15 - servoIdx
                 updateStateDisplay()
 
-            currPosn, currRate := quadEnc.positionRate()
-            if currPosn <> priorPosition
-                deltaPosition := currPosn - priorPosition
-                priorPosition := currPosn
-                'debug("* Rotary Encoder at ", sdec_(currPosn), ", delta=", sdec_(deltaPosition), ", rate=", sdec_(currRate))
-                if currRate == 0
-                    tmpOffset := servoOffset + deltaPosition
-                else
-                    tmpOffset := servoOffset + (deltaPosition * currRate * ENC_RATE_SCALE)
+            deltaPosition := quadEnc.positionScaled()
+            if deltaPosition <> 0
+                tmpOffset := servoOffset + deltaPosition
                 servoOffset := SRVO_OFST_MIN #> tmpOffset <# SRVO_OFST_MAX
-                'debug("* Offset ", sdec_(servoOffset))
+                'debug("* Offset=", sdec_(servoOffset), ", delta=",  sdec_(deltaPosition))
                 'debug("   ")
                 updateOffsetDisplay()
                 pcaServos.gotoMicroSec(servoIdx, servoOffset)
-
 
     debug("done... holding...")
     repeat
