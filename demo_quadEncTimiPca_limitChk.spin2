@@ -76,7 +76,7 @@ DAT
    msgLOW       BYTE    "LO",0
    msgHIGH      BYTE    "HI",0
 
-   Title0       BYTE    "ServoExer",0
+   Title0       BYTE    "Ser Limit",0
    Title1       BYTE    "SRVO-1 LO",0
    rateMsg      BYTE    "     1500",0
 

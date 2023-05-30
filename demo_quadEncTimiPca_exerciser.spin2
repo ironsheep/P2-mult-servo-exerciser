@@ -68,23 +68,42 @@ OBJ
 
 DAT
 
-   servoIdx     LONG    0
-   servoInvertIdx     LONG    0
-   servoOffset  LONG    1500
-   stateIdx     LONG    0
+    servoIdx     LONG    0
+    servoOffset  LONG    1500
+    stateIdx     LONG    0
 
-   msgLOW       BYTE    "LO",0
-   msgHIGH      BYTE    "HI",0
+    msgLOW       BYTE    "LO",0
+    msgHIGH      BYTE    "HI",0
 
-   Title0       BYTE    "ServoExer",0
-   Title1       BYTE    "SRVO-1 LO",0
-   rateMsg      BYTE    "     1500",0
+    Title0       BYTE    "ServoExer",0
+    Title1       BYTE    "SRVO-1 LO",0
+    rateMsg      BYTE    "     1500",0
 
-   deltaPosition     LONG    0
-   priorPosition     LONG    0
-   desiredOffset     LONG    0
+    deltaPosition     LONG    0
+    priorPosition     LONG    0
+    desiredOffset     LONG    0
 
-PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIsDouble, bDevicePresent
+    ' ------------------------------------------------------------
+    srvoId1         BYTE    0, "Eye L/R",0
+    srvoId2         BYTE    1, "Eye U/D",0
+    srvoId3         BYTE    2, "Lid TR",0
+    srvoId4         BYTE    3, "Lid BR",0
+    srvoId5         BYTE    4, "Lid TL",0
+    srvoId6         BYTE    5, "Lid BL",0
+
+    srvoIdTable    ' 1st table-entry must follow immediately
+                    WORD    @srvoId1
+                    WORD    @srvoId2
+                    WORD    @srvoId3
+                    WORD    @srvoId4
+                    WORD    @srvoId5
+                    WORD    @srvoId6
+    srvoIdTableEnd ' last entry must be immediately above this line
+    ' ------------------------------------------------------------
+    srvoIdEntCt        BYTE    (@srvoIdTableEnd-@srvoIdTable) >> 1   ' div by 2
+    ' ------------------------------------------------------------
+
+PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIsDouble, bDevicePresent, incre
     ' start our input device
     quadEnc.start(QUAD_ENC_CLK, QUAD_ENC_DAT, QUAD_ENC_BTN)
     quadEnc.setScale(ENC_RATE_SCALE)
@@ -128,7 +147,6 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
 '}
 
     ' select the 4x LED matrix page
-    servoInvertIdx := 15 - servoIdx
     pcaServos.gotoMicroSec(servoIdx, servoOffset)
     bDidSucceed := timi.setPage(TIMI_PAGEID_LEDMTX, timi.MATES_RESPONSE_LTIMEOUT)
     if bDidSucceed
@@ -138,27 +156,16 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
         repeat
             bIsPressed, bIsDouble :=  quadEnc.isButtonPressed()
             if bIsPressed
-                if bIsPressed and not bIsDouble
-                    debug("    ")
-                    debug("* FINDING ---- ", zstr_(@Title1), " = ", sdec_(servoOffset), "----")
-                    debug("    ")
-
                 'debug("* Button Pressed, isDbl=", sdec_(bIsDouble))
-                stateIdx += (bIsDouble) ? -1 : +1
-                if stateIdx > 1
-                    stateIdx := 0
+                incre := (bIsDouble) ? -1 : +1
                     'pcaServos.gotoMicroSec(servoIdx, SRVO_OFST_CNTR)            ' reset to center as we leave
-                    servoIdx++
-                    if servoIdx >= MAX_SERVOS
-                        servoIdx := 0
-                elseif stateIdx < 0
-                    stateIdx := 1
+                servoIdx += incre
+                if servoIdx >= MAX_SERVOS
+                    servoIdx := 0
                     'pcaServos.gotoMicroSec(servoIdx, SRVO_OFST_CNTR)            ' reset to center as we leave
-                    servoIdx--
-                    if servoIdx < 0
-                        servoIdx := MAX_SERVOS - 1
-                servoOffset := SRVO_OFST_CNTR
-                servoInvertIdx := 15 - servoIdx
+                if servoIdx < 0
+                    servoIdx := MAX_SERVOS - 1
+                servoOffset := pcaServos.getMicroSec(servoIdx)                  ' get last known position
                 updateStateDisplay()
 
             deltaPosition := quadEnc.positionScaled()
@@ -178,7 +185,7 @@ PRI updateDisplay()
     updateOffsetDisplay()
 
 PRI updateStateDisplay() | pStateTitle
-    pStateTitle := genStateMsg(servoIdx, stateIdx)
+    pStateTitle := genStateMsg(servoIdx)
     timi.updateDotMatrixWidget(1, pStateTitle)
     updateInstruDisplay()
 
@@ -187,13 +194,13 @@ PRI updateOffsetDisplay() | pRateMsg
     timi.updateDotMatrixWidget(2, pRateMsg)
 
 PRI updateInstruDisplay() | pInstruMsg, pText
-    pText := (stateIdx == 0) ? @"to 750 -" : @"to 2250 -"
+    pText := @"750  2250"
     pInstruMsg := rightAlignString(pText, 9)
     timi.updateDotMatrixWidget(3, pInstruMsg)
 
-PRI genStateMsg(nServo, nState) : pMessage | lenBytes, pStateMsg
-    pStateMsg := (nState == 0) ? @msgLOW : @msgHIGH
-    lenBytes := memstr.sFormatStr2(@Title1, @"SRVO-%d %s", nServo, pStateMsg)
+PRI genStateMsg(nServo) : pMessage | lenBytes, pStateMsg
+    pStateMsg := strForServoIdx(nServo)
+    lenBytes := memstr.sFormatStr2(@Title1, @"%d %s", nServo, pStateMsg)
     pMessage := @Title1
 
 PRI rightAlignValue(value, width) : pMessage | lenBytes, BYTE fmtStr[20]
@@ -205,6 +212,23 @@ PRI rightAlignString(pStr, width) : pMessage | lenBytes, BYTE fmtStr[20]
     lenBytes := memstr.sFormatStr1(@fmtStr, @"\%%ds", width)
     lenBytes := memstr.sFormatStr1(@rateMsg, @fmtStr, pStr)
     pMessage := @rateMsg
+
+PRI strForServoIdx(servoIndex) : pStr | nIdx, pTblEntry, pPossIdStr, nServoIdx
+' identify command requested
+    pStr := 0
+    repeat nIdx from 0 to srvoIdEntCt - 1
+        pTblEntry := @@WORD[@srvoIdTable][nIdx] ' get BYTE ptr from table
+        nServoIdx := BYTE[pTblEntry][0]  ' skip enumVal get BYTE ptr to cmd zstring
+        pPossIdStr := @BYTE[pTblEntry][1]  ' skip enumVal get BYTE ptr to cmd zstring
+        'debug("-? Tbl[", udec_(nIdx), "] ", uhex_long(pTblEntry), ", srvo=", udec_(nServoIdx), ", [", zstr_(pPossIdStr), "] ?-")
+        'debug("-? pPossIdStr(", udec_(strsize(pPossIdStr)), ")=[", zstr_(pPossIdStr), "] ?-")
+        if nServoIdx == servoIndex
+            pStr := pPossIdStr   ' do match, we have our value
+            quit
+
+    if pStr == 0
+        debug("EEE strForServoIdx: Unknown servo id(", udec_(servoIndex), ")!")
+
 
 CON { license }
 {{

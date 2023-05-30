@@ -79,6 +79,7 @@ DAT
     priorPosition   LONG    0
     desiredOffset   LONG    0
 
+    ' ------------------------------------------------------------
     srvoId1         BYTE    0, "Eye L/R",0
     srvoId2         BYTE    1, "Eye U/D",0
     srvoId3         BYTE    2, "Lid TR",0

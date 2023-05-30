@@ -171,6 +171,8 @@ con { PCA9685 constants }
 
     PCA9685_SW_RESET_CMD                = $06
 
+    PCA9685_MAX_CHANNELS        = 16
+
     ' Mode1 bits
     MODE1_RESTART = $80
     MODE1_EXTCLK_ENABLE = $40
@@ -231,6 +233,8 @@ eDeviceFound    LONG    DVC_NOT_FOUND
 bShowDebug      BYTE    TRUE
 bPinsSetUp      BYTE    FALSE
 bDeviceFound    BYTE    FALSE
+
+chanUSec        LONG    1500[PCA9685_MAX_CHANNELS]
 
 PUB null()
     '' This is not a top-level object
@@ -299,6 +303,7 @@ PUB setAllServos(uSec) | ok, validChan, regOnLAddr, onValue, offValue
     if bShowDebug
         term.fstr1(string("+ setAllServos(ALL, %d uS)\r\n"), uSec)
     onValue, offValue := calcOnOffValuesForMicroSec(uSec)
+    setAllChannels(uSec)
     ok := write9685OffOnWords(PCA9685_ALL_LED_ON_L, onValue, offValue)
 
 
@@ -307,13 +312,22 @@ PUB gotoMicroSec(channel, uSec) | ok, validChan, regOnLAddr, onValue, offValue
     ' convert uSec to pulse width and
     if bShowDebug
         term.fstr3(string("+ gotoMicroSec(Ch%d, %d uS) Cg%d\r\n"), channel, uSec, cogid())
-    validChan := 0 #> channel <# 15                             ' legal PWM channel
+    validChan := 0 #> channel <# PCA9685_MAX_CHANNELS - 1                             ' legal PWM channel
     regOnLAddr := validChan * 4 + 6
     onValue, offValue := calcOnOffValuesForMicroSec(uSec)
+    LONG [@chanUSec][channel] := uSec
     ok := write9685OffOnWords(regOnLAddr, onValue, offValue)
 
+PUB getMicroSec(channel) : uSec| ok, validChan, regOnLAddr, onValue, offValue
+    '' Return last known position in uSec for channel
+    validChan := 0 #> channel <# PCA9685_MAX_CHANNELS - 1                             ' legal PWM channel
+    uSec := LONG [@chanUSec][validChan]
 
-CON  { ---- PRIVATE Utility Methods ---- }
+CON  { ---- PRIVATE (Utility) Methods ---- }
+
+PRI setAllChannels(uSec) | chanIdx
+    repeat chanIdx from 0 to PCA9685_MAX_CHANNELS - 1
+        LONG [@chanUSec][chanIdx] := uSec
 
 PRI setupPins(pinSCL, pinSDA, pinOE) : ok
     ' Configure pin numbers if not already
