@@ -148,7 +148,7 @@ PRI pullUpValueForEnum(pullupRqst) : pullup
     other   : pullup := P_HIGH_15K                              ' 15K
 
 PUB stop()
-'' Stop serial device and release pins
+'' Stop underlying serial device and release pins
     serIO.stop()
 
 PUB error(): latestError
@@ -158,8 +158,8 @@ PUB error(): latestError
 CON ' --- Mates Library at time of port to spin2 ---
 
 PUB hardReset() : bDidSucceed | startTimeMSec, timeDeltaMSec
-'' Uses hardware driven signal to hard reset companion device
-'' Returns the boolean response from the reset.
+'' Uses hardware driven signal to hard reset Timi device
+'' Returns the boolean response from the reset
     if pin_rst == NOT_SET
         softReset()
     else
@@ -178,8 +178,8 @@ PUB hardReset() : bDidSucceed | startTimeMSec, timeDeltaMSec
             debug("Timed out after ", udec_(timeDeltaMSec), " ms")
 
 PUB softReset() : bDidSucceed | startTimeMSec, timeDeltaMSec
-'' Sends a serial command to the connected device to trigger a reset
-'' Returns the boolean response from the reset.
+'' Sends a serial command to the connected Timi device to trigger a reset
+'' Returns the boolean response from the reset
     debug("Resetting module using command ...")
 
     write_command(MATES_CMD_SYSTEM_RESET)
@@ -228,8 +228,8 @@ PUB sync(bResetToPage0, timeout) : bDidSucceed | page, startTimeMSec
                 setPage(0, MATES_RESPONSE_TIMEOUT)
 
 PUB setBacklight(backlightValue) : bDidSucceed
-'' Sets the intensity of the backlight of connected device. where {backlightValue} is [0-255]
-'' Returns the boolean response from the backlight command.
+'' Sets the intensity of the backlight of connected device: where {backlightValue} is [0-255]
+'' Returns the boolean response from the backlight command
     debug("Setting backlight to ", sdec_(backlightValue), " ...")
 
     check_argument_value(@"backlightValue", backlightValue, RTE_UINT8)
@@ -239,87 +239,66 @@ PUB setBacklight(backlightValue) : bDidSucceed
     bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB setPage(pageIndex, timeout) : bDidSucceed
-        {
-        Sets the page to be displayed on the connected device.
-        Args
-            pageIndex
-                - index of page to set as current. Value must be within the uint16 datatype range.
+'' Sets the page to be displayed on the connected device
+''  {pageIndex} index of page to set as current. Value must be within the uint16 datatype range
+''  {timeout} overrides the default timeout, in case Page needs more time to draw
+'' Returns T/F where T indicates success
 
-            timeout
-                - overrides the default timeout, in case Page needs more time to draw
-        Returns
-            boolean response indicating command success or failure.
-        }
-        debug("setPage(", udec_(pageIndex), ")...")
-        bDidSucceed := setPageShowingDebug(pageIndex, timeout, FALSE)
+    debug("setPage(", udec_(pageIndex), ")...")
+    bDidSucceed := setPageShowingDebug(pageIndex, timeout, FALSE)
 
 PRI setPageShowingDebug(pageIndex, pageDrawTimeout, bShowDebug) : bDidSucceed
-        {
-        Sets the page to be displayed on the connected device.
-        Args
-            pageIndex
-                - index of page to set as current. Value must be within the uint16 datatype range.
-
-            timeout
-                - overrides the default timeout, in case Page needs more time to draw
-
-            bShowDebug
-                - whether to log messages or skip (typically when syncing)
-        Returns
-            boolean response indicating command success or failure.
-        }
-        if (bShowDebug)
-            debug("Navigating to page ", sdec_(pageIndex), " ...")
-
-        check_argument_value(@"pageIndex", pageIndex, RTE_UINT16)
-        write_command(MATES_CMD_SET_PAGE)
-        write_int16(pageIndex)
-
-        bDidSucceed := waitForAck(pageDrawTimeout)
-
-
-PUB getPage() : pageIdx
-        {
-        Returns the index of the current page displayed by the connected device.
-        Args
-            void.
-        Returns
-            integer corresponding to current page index.
-        }
-        pageIdx := getPageShowingDebug(FALSE)
-
-PRI getPageShowingDebug(bShowDebug) : pageIdx
-        {
-        Returns the index of the current page displayed by the connected device.
-        Args
-            void.
-        Returns
-            integer corresponding to current page index.
-        }
-        if (bShowDebug)
-            debug("Querying active page ....")
-
-        write_command(MATES_CMD_GET_PAGE)
-
-        pageIdx := read_response()
-
-        if (bShowDebug)
-            debug("  -- At page ", sdec_(pageIdx), " ...")
-
-PUB setWidgetValueById(widgetId, widgetValue) : bDidSucceed
     {
-    Sets the value of a specific widget based on the provided identifier.
+    Sets the page to be displayed on the connected device.
     Args
-        widgetId
-            - the unique id of the desired widget.
-            Value must exist within the int16 datatype range.
-
-        widgetValue
-            - the value the corresponding widget will be set to.
-            Value must exist within the int16 datatype range.
+        pageIndex
+            - index of page to set as current. Value must be within the uint16 datatype range.
+        timeout
+            - overrides the default timeout, in case Page needs more time to draw
+        bShowDebug
+            - whether to log messages or skip (typically when syncing)
     Returns
         boolean response indicating command success or failure.
     }
+    if (bShowDebug)
+        debug("Navigating to page ", sdec_(pageIndex), " ...")
+
+    check_argument_value(@"pageIndex", pageIndex, RTE_UINT16)
+    write_command(MATES_CMD_SET_PAGE)
+    write_int16(pageIndex)
+
+    bDidSucceed := waitForAck(pageDrawTimeout)
+
+
+PUB getPage() : pageIdx
+'' Returns {pageIdx} the index of the current page displayed by the connected device
+
+    pageIdx := getPageShowingDebug(FALSE)
+
+PRI getPageShowingDebug(bShowDebug) : pageIdx
+    {
+    Returns the index of the current page displayed by the connected device.
+    Args
+        void.
+    Returns
+        integer corresponding to current page index.
+    }
+    if (bShowDebug)
+        debug("Querying active page ....")
+
+    write_command(MATES_CMD_GET_PAGE)
+
+    pageIdx := read_response()
+
+    if (bShowDebug)
+        debug("  -- At page ", sdec_(pageIdx), " ...")
+
+PUB setWidgetValueById(widgetId, widgetValue) : bDidSucceed
+'' Sets the value of a specific widget based on the provided identifier
+''  {widgetId} the unique id of the desired widget. Value must be within the int16 datatype range
+''  {widgetValue} the value the corresponding widget will be set to. Value must exist within the int16 datatype range
+'' Returns T/F where T indicates success
+
     check_argument_value(@"widgetId", widgetId, RTE_INT16)
     check_argument_value(@"value", widgetValue, RTE_INT16)
 
@@ -332,17 +311,10 @@ PUB setWidgetValueById(widgetId, widgetValue) : bDidSucceed
     bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB getWidgetValueById(widgetId) : widgetValue
-    {
-    Gets the value of a specific widget based on the provided identifier.
+'' Gets the value of a widget based on the {widgetId}
+''  {widgetId} the unique id of the target widget. Value must be within the uint16 datatype range.
+'' Returns {widgetValue} an integer corresponding to widget value.
 
-    Args
-        widgetId
-
-            the unique id of the target widget.
-            Value must be within the uint16 datatype range.
-    Returns
-        integer corresponding to widget value.
-    }
     check_argument_value(@"widgetId", widgetId, RTE_INT16)
 
     debug("Query widget (", uhex_(widgetId), ") value ...")
@@ -353,114 +325,64 @@ PUB getWidgetValueById(widgetId) : widgetValue
     widgetValue := read_response()
 
 PUB setWidgetValueByIndex(widgetType, widgetIndex, widgetValue) : bDidSucceed | widgetId
-        {
-        Sets the value of a specific widget based on the index within a widget type.
-        Args
-            widgetType
-                - the unique type of widget to be changed.
-
-            widgetIndex
-                - the index of the widget, of a specific type.
-                Value must be within the uint8 datatype range.
-
-            widgetValue
-                - the value the corresponding widget will be set to.
-                Value must be within the int16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        widgetId := getWidgetId(widgetType, widgetIndex)
-        bDidSucceed := setWidgetValueById(widgetId, widgetValue)
+'' Sets the value of a specific widget based on the index within a widget type
+''  {widgetType} the unique type of widget to be changed
+''  {widgetIndex} the index of the widget, of a specific type. Value must be within the uint8 datatype range.
+''  {widgetValue} the value the corresponding widget will be set to. Value must be within the int16 datatype range.
+'' Returns T/F where T indicates success
+    widgetId := getWidgetId(widgetType, widgetIndex)
+    bDidSucceed := setWidgetValueById(widgetId, widgetValue)
 
 PUB getWidgetValueByIndex(widgetType, widgetIndex) : widgetValue | widgetId
-        {
-        Gets the value of a specific widget based on the index within a widget type.
-        Args
-            widgetType
-                - the unique type of widget to be changed.
+'' Gets the value of a specific widget based on the index within a widget type
+''  {widgetType} the unique type of widget to be queried
+''  {widgetIndex} the index of the widget, of a specific type. Value must be within the uint8 datatype range.
+'' Returns {widgetValue} an integer corresponding to widget value.
 
-            widgetIndex
-                - the index of the widget, of a specific type.
-                Value must be within the uint8 datatype range.
-        Returns
-            integer corresponding to widget value.
-        }
-        widgetId := getWidgetId(widgetType, widgetIndex)
-        widgetValue := getWidgetValueById(widgetId)
+    widgetId := getWidgetId(widgetType, widgetIndex)
+    widgetValue := getWidgetValueById(widgetId)
 
 PUB setLedDigitsShortValue(widgetIndex, widgetValue) : bDidSucceed
-        {
-        Sets the value of specifically int16 LED Digits widgets based on the widget index.
-        Args
-            widgetIndex
-                - the index of the LED Digits widget. Value must be within uint8 datatype range.
+'' Sets the value of specifically int16 LED Digits widgets based on the widget index
+''  {widgetIndex} the index of the LED Digits widget. Value must be within uint8 datatype range.
+''  {widgetValue} the value the corresponding widget will be set to. Values must be within the int16 datatype range.
+'' Returns T/F where T indicates success
 
-            widgetValue, float
-                - the value the corresponding widget will be set to.
-                Values must be within the int16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        bDidSucceed := setWidgetValueByIndex(MATES_LED_DIGITS, widgetIndex, widgetValue)
+    bDidSucceed := setWidgetValueByIndex(MATES_LED_DIGITS, widgetIndex, widgetValue)
 
 PUB setLedDigitsLongValue(widgetIndex, widgetValue) : bDidSucceed | widgetId
-        {
-        Sets the value of specifically int32 LED Digits widgets based on the widget index.
-        Args
-            widgetIndex
-                - the index of the LED Digits widget. Value must be within uint8 datatype range.
+'' Sets the value of specifically int32 LED Digits widgets based on the widget index
+''  {widgetIndex} the index of the LED Digits widget. Value must be within uint8 datatype range.
+''  {widgetValue} the value the corresponding widget will be set to. Values must be within the int32 datatype range.
+'' Returns T/F where T indicates success
 
-            widgetValue, float
-                - the value the corresponding widget will be set to.
-                Values must be within the int32 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"value", widgetValue, RTE_INT32)
+    check_argument_value(@"value", widgetValue, RTE_INT32)
 
-        widgetId := getWidgetId(MATES_LED_DIGITS, widgetIndex)
-        bDidSucceed := set_widget_value_32bit(widgetId, widgetValue, RTE_INT32)
+    widgetId := getWidgetId(MATES_LED_DIGITS, widgetIndex)
+    bDidSucceed := set_widget_value_32bit(widgetId, widgetValue, RTE_INT32)
 
 PUB setLedDigitsFloatValue(widgetIndex, floatWidgetValue) : bDidSucceed | widgetId
-        {
-        Sets the value of specifically float32 LED Digits widgets based on the widget index.
-        Args
-            widgetIndex
-                - the index of the LED Digits widget. Value must be within uint8 datatype range.
+'' Sets the value of specifically float32 LED Digits widgets based on the widget index
+''  {widgetIndex} the index of the LED Digits widget. Value must be within uint8 datatype range.
+''  {floatWidgetValue} the value the corresponding widget will be set to. Values must be within the float32 datatype range.
+'' Returns T/F where T indicates success
 
-            floatWidgetValue
-                - the value the corresponding widget will be set to.
-                Values must be within the float32 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"value", floatWidgetValue, RTE_FLOAT32)
+    check_argument_value(@"value", floatWidgetValue, RTE_FLOAT32)
 
-        widgetId := getWidgetId(MATES_LED_DIGITS, widgetIndex)
-        bDidSucceed := set_widget_value_32bit(widgetId, floatWidgetValue, RTE_FLOAT32)
+    widgetId := getWidgetId(MATES_LED_DIGITS, widgetIndex)
+    bDidSucceed := set_widget_value_32bit(widgetId, floatWidgetValue, RTE_FLOAT32)
 
 PUB setSpectrumValue(spectrumId, gaugeIndex, widgetValue) : bDidSucceed
-        {
-        Sets the value of specifically Spectrum widgets based the spectrum id and gauge index.
-        Args
-            spectrumId
-                - the id of the relevant Spectrum widget.
-                Value must be within the int16 datatype range.
+'' Sets the value of specifically Spectrum widgets based the spectrum id and gauge index
+''  {spectrumId} the id of the relevant Spectrum widget. Value must be within the int16 datatype range.
+''  {gaugeIndex} the gauge index within the target Spectrum widget. Value must be within the uint8 datatype range.
+''  {widgetValue} the value the corresponding widget will be set to. Value must be within the uint8 datatype range.
+'' Returns T/F where T indicates success
 
-            gaugeIndex
-                - the gauge index within the target Spectrum widget.
-                Value must be within the uint8 datatype range.
-
-            widgetValue
-                - the value the corresponding widget will be set to.
-                Value must be within the uint8 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"spectrumId", spectrumId, RTE_INT16)
-        check_argument_value(@"gaugeIndex", gaugeIndex, RTE_UINT8)
-        check_argument_value(@"value", widgetValue, RTE_UINT8)
-        bDidSucceed := setWidgetValueById(spectrumId, (gaugeIndex << 8) | widgetValue)
+    check_argument_value(@"spectrumId", spectrumId, RTE_INT16)
+    check_argument_value(@"gaugeIndex", gaugeIndex, RTE_UINT8)
+    check_argument_value(@"value", widgetValue, RTE_UINT8)
+    bDidSucceed := setWidgetValueById(spectrumId, (gaugeIndex << 8) | widgetValue)
 
 PUB setLedSpectrumValue(ledSpectrumIndex, gaugeIndex, widgetValue) : bDidSucceed | widgetId
         {
@@ -758,18 +680,11 @@ PUB setPrintAreaColorRGB(printAreaIndex, redValue, greenValue, blueValue) : bDid
         bDidSucceed := setPrintAreaColor565(printAreaIndex, rgb565Value)
 
 PUB appendArrayToPrintArea(printAreaIndex, pBytes, byteCount) : bDidSucceed | char, byteIdx
-        {
-        Appends an array of 8-bit integers to a targeted Print Area.
-        Args
-            printAreaIndex
-                - the index of the target Print Area widget.
-                Value must be within the uint16 datatype range.
-
-            array: str
-                - list of 8-bit values to be appended
-        Returns
-            boolean response indicating command success or failure.
-        }
+'' Appends {pBytes} a list of integers to the {printAreaIndex} Print Area widget
+''  {printAreaIndex} index of the target Scope widget
+''  {pBytes} pointer to list of uint8 values to be appended to Print Area widget
+''  {byteCount} the number of uint8 values to be appended
+'' Returns T/F where T indicates success
         check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
 
         debug("Append byte array to PrintArea ", udec_word_(printAreaIndex), " ...")
@@ -785,23 +700,10 @@ PUB appendArrayToPrintArea(printAreaIndex, pBytes, byteCount) : bDidSucceed | ch
         bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB appendStringToPrintArea(printAreaIndex, pString) : bDidSucceed
-        {
-        Appends text to a targeted Print Area.
-        Args
-            printAreaIndex
-                - the index of the target Print Area widget.
-                Value must be within the uint16 datatype range.
-
-            pTextFormat
-                - the string to be appended to the Print Area
-                with zero or more format specifiers to be formatted.
-
-            formatArgs
-                - zero or more args that can be formatted into the
-                textFormat string.
-        Returns
-            boolean response indicating command success or failure.
-        }
+'' Appends {pString} to the {printAreaIndex} Print Area widget
+''  {printAreaIndex} index of the target Print Area widget
+''  {pString} the string to be appended to the Print Area
+'' Returns T/F where T indicates success
         check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
 
         debug("Append string [", zstr_(pString), "] to PrintArea ", udec_word_(printAreaIndex), " ...")
@@ -815,19 +717,12 @@ PUB appendStringToPrintArea(printAreaIndex, pString) : bDidSucceed
         bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB appendToScopeWidget(scopeIndex, pWordBuffer, countWords) : bDidSucceed
-        {
-        Appends a list of integers to a Scope widget.
-        Args
-            scopeIndex
-                - the index of the target Scope widget.
-                Value must be within the uint16 datatype range.
+'' Appends {pWordBuffer} a list of integers to the {scopeIndex} Scope widget
+''  {scopeIndex} index of the target Scope widget
+''  {pWordBuffer} pointer to list of uint16 values to be appended to scope widget
+''  {countWords} the number of uint16 values to be appended
+'' Returns T/F where T indicates success
 
-            buffer: [int]
-                - the list of datapoints to be appended to scope widget.
-                Values must be within the int16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
         check_argument_value(@"scopeIndex", scopeIndex, RTE_UINT16)
 
         debug("Appending values to Scope ", udec_word(scopeIndex), " ...")
@@ -840,24 +735,11 @@ PUB appendToScopeWidget(scopeIndex, pWordBuffer, countWords) : bDidSucceed
         bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB updateDotMatrixWidget(matrixIndex, pString) : bDidSucceed | string_to_write
-        {
-        Changes the text displayed by the target Dot Matrix widget.
+'' Writes {pString} to the {matrixIndex} Dot Matrix widget
+''  {matrixIndex} index of the target widget
+''  {pString} pointer to zero terminated string to be displayed
+'' Returns T/F where T indicates success
 
-        Args
-            matrixIndex (int)
-            - The index of the target Scope widget.
-            Value must be within the uint16 datatype range.
-
-            pTextFormat
-            - the string to be appended to the Scope widget
-            with zero or more format specifiers to be formatted.
-
-            formatArgs
-            - zero or more args that can be formatted into the
-            text_format string.
-        Returns
-            boolean response indicating command success or failure.
-        }
         check_argument_value(@"matrix_index", matrixIndex, RTE_UINT16)
 
         'debug("Updating DotMatrix ", udec_word_(matrixIndex), " ...")
@@ -871,13 +753,7 @@ PUB updateDotMatrixWidget(matrixIndex, pString) : bDidSucceed | string_to_write
 
 PUB getButtonEventCount() : countButtonEvents
 '' Gets the number of events recorded from applicable button widgets
-        {
-        Args
-            void.
-        Returns
-            integer corresponding to the number of events.
-        }
-
+'' Returns {countButtonEvents} the number of events recorded
         debug("Query number of button events...")
 
         write_command(MATES_CMD_BTN_EVENT_COUNT)
@@ -885,13 +761,8 @@ PUB getButtonEventCount() : countButtonEvents
         countButtonEvents := read_response()
 
 PUB getNextButtonEvent() : widgetId
-        {
-        Gets the next event source logged from applicable buttons
-        Args
-            void.
-        Returns
-            integer corresponding to the button widget ID
-        }
+'' Gets the next event source logged from applicable buttons
+'' Returns {widgetId} an integer corresponding to the button widget ID
 
         debug("Query the next recorded button event...")
 
@@ -900,13 +771,8 @@ PUB getNextButtonEvent() : widgetId
         widgetId := read_response()
 
 PUB getSwipeEventCount(): eventCount
-        {
-        Gets the number of events recorded from swipe gestures.
-        Args
-            void.
-        Returns
-            integer corresponding to the number of events.
-        }
+'' Gets the number of events recorded from swipe gestures
+'' Returns {eventCount} an integer corresponding to the number of events
 
         debug("Query number of swipe events...")
 
@@ -915,13 +781,8 @@ PUB getSwipeEventCount(): eventCount
         eventCount := read_response()
 
 PUB getNextSwipeEvent() : swipeEvent
-        {
-        Gets the next swipe event value
-        Args
-            void.
-        Returns
-            integer corresponding to the swipe event
-        }
+'' Gets the next swipe event value
+'' Returns {swipeEvent} an integer corresponding to the swipe event
 
         debug("Query the next recorded swipe event...")
 
