@@ -72,8 +72,8 @@ DAT
     Title0          BYTE    "Eyes Exer",0
     Title1          BYTE    "s1 ---   ",0
     rateMsg         BYTE    "     1500",0
-    typeMsg50        BYTE    "-50   +50",0
-    typeMsg0        BYTE    "  0   100",0
+    typeMsg50       BYTE    "-50 0 +50",0
+    typeMsg0        BYTE    " 0 50 100",0
 
     deltaPosition   LONG    0
     priorPosition   LONG    0
@@ -95,7 +95,7 @@ DAT
                     WORD    @srvoId6
     srvoIdTableEnd ' last entry must be immediately above this line
     ' ------------------------------------------------------------
-    srvoIdCt        BYTE    (@srvoIdTableEnd-@srvoIdTable) >> 1   ' div by 2
+    srvoIdEntCt        BYTE    (@srvoIdTableEnd-@srvoIdTable) >> 1   ' div by 2
     ' ------------------------------------------------------------
 
 PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIsDouble, bDevicePresent, incre, bIs0To100
@@ -136,6 +136,7 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
             'waitms(1000)
             'eyes.lidsClose()
             '}
+            setServoLimits(servoIdx)
             updateDisplay()
             repeat
                 bIsPressed, bIsDouble :=  quadEnc.isButtonPressed()
@@ -147,11 +148,7 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
                         servoIdx := 0
                     elseif servoIdx < 0
                         servoIdx := MAX_SERVOS - 1
-                    bIs0To100 := eyes.isZeroTo100(servoIdx)
-                    servoRange := eyes.getRange(servoIdx)                       ' get last known position so servo doesn't slew when we change servos
-                    servoRangeMin := (bIs0To100) ? 0 : -50
-                    servoRangeMax := (bIs0To100) ? 100 : 50
-                    updateStateDisplay()
+                    bIs0To100 := setServoLimits(servoIdx)
 
                 deltaPosition := quadEnc.positionScaled()
                 if deltaPosition <> 0
@@ -165,12 +162,19 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
     debug("done... holding...")
     repeat
 
+PRI setServoLimits(nServo) : bIs0To100
+    bIs0To100 := eyes.isZeroTo100(servoIdx)
+    servoRange := eyes.getRange(servoIdx)                       ' get last known position so servo doesn't slew when we change servos
+    servoRangeMin := (bIs0To100) ? 0 : -50
+    servoRangeMax := (bIs0To100) ? 100 : 50
+    updateStateDisplay()
+
 PRI updateDisplay()
     updateStateDisplay()
     updateOffsetDisplay()
 
 PRI updateStateDisplay() | pStateTitle, pLimitText
-    pStateTitle := genServoName(servoIdx)
+    pStateTitle := genServoName(servoIdx)               ' FIXME: fix this method!!!
     timi.updateDotMatrixWidget(1, pStateTitle)
     pLimitText := genLimitText(servoIdx)
     timi.updateDotMatrixWidget(3, pLimitText)
@@ -179,8 +183,9 @@ PRI updateOffsetDisplay() | pRateMsg
     pRateMsg := rightAlignValue(servoRange, 9)
     timi.updateDotMatrixWidget(2, pRateMsg)
 
-PRI genServoName(nServo) : pMessage | lenBytes, pStateMsg
-    lenBytes := memstr.sFormatStr2(@Title1, @"%d %s", nServo, pStateMsg)
+PRI genServoName(nServo) : pMessage | lenBytes, pNameStr
+    pNameStr := strForServoIdx(nServo)
+    lenBytes := memstr.sFormatStr2(@Title1, @"%d %s", nServo, pNameStr)
     pMessage := @Title1
 
 PRI genLimitText(nServo) : pMessage | lenBytes, pStateMsg
@@ -199,17 +204,14 @@ PRI rightAlignString(pStr, width) : pMessage | lenBytes, BYTE fmtStr[20]
     lenBytes := memstr.sFormatStr1(@rateMsg, @fmtStr, pStr)
     pMessage := @rateMsg
 
-PRI strForServoIdx(servoIndex) : pStr | nIdx, pIdEntry, pPossIdStr, nServoIdx
+PRI strForServoIdx(servoIndex) : pStr | nIdx, pTblEntry, pPossIdStr, nServoIdx
 ' identify command requested
     pStr := 0
-    'debug("-? pValueStr(", udec_(strsize(pValueStr)), ")=[", zstr_(pValueStr), "] ?-")
-    'debug("-? Our tables: ", uhex_long_array(@cmdTable, 16), "] ?-")
-
-    repeat nIdx from 0 to srvoIdCt - 1
-        pIdEntry := @@WORD[@srvoIdTable][nIdx] ' get BYTE ptr from table
-        nServoIdx := BYTE[pIdEntry][0]  ' skip enumVal get BYTE ptr to cmd zstring
-        pPossIdStr := @BYTE[pIdEntry][1]  ' skip enumVal get BYTE ptr to cmd zstring
-        'debug("-? Tbl[", udec_(nIdx), "] ", uhex_long(pIdEntry), " [", zstr_(pPossIdStr), "] ?-")
+    repeat nIdx from 0 to srvoIdEntCt - 1
+        pTblEntry := @@WORD[@srvoIdTable][nIdx] ' get BYTE ptr from table
+        nServoIdx := BYTE[pTblEntry][0]  ' skip enumVal get BYTE ptr to cmd zstring
+        pPossIdStr := @BYTE[pTblEntry][1]  ' skip enumVal get BYTE ptr to cmd zstring
+        'debug("-? Tbl[", udec_(nIdx), "] ", uhex_long(pTblEntry), ", srvo=", udec_(nServoIdx), ", [", zstr_(pPossIdStr), "] ?-")
         'debug("-? pPossIdStr(", udec_(strsize(pPossIdStr)), ")=[", zstr_(pPossIdStr), "] ?-")
         if nServoIdx == servoIndex
             pStr := pPossIdStr   ' do match, we have our value
