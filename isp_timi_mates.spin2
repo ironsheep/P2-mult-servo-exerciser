@@ -117,7 +117,7 @@ DAT
     matesControllerLibVer BYTE   "1.0.8", 0
 
 pub null()
-'' {This is not a top-level object}
+''  {This is not a top-level object}
 
 PUB start(pinTx, pinRx, pinReset, baudRate) : bDidSucceed | pullupVal
 '' Start simple serial comms on given pins at baudrate
@@ -248,18 +248,11 @@ PUB setPage(pageIndex, timeout) : bDidSucceed
     bDidSucceed := setPageShowingDebug(pageIndex, timeout, FALSE)
 
 PRI setPageShowingDebug(pageIndex, pageDrawTimeout, bShowDebug) : bDidSucceed
-    {
-    Sets the page to be displayed on the connected device.
-    Args
-        pageIndex
-            - index of page to set as current. Value must be within the uint16 datatype range.
-        timeout
-            - overrides the default timeout, in case Page needs more time to draw
-        bShowDebug
-            - whether to log messages or skip (typically when syncing)
-    Returns
-        boolean response indicating command success or failure.
-    }
+' Sets the page to be displayed on the connected device
+'  {pageIndex} index of page to set as current. Value must be within the uint16 datatype range
+'  {timeout} overrides the default timeout, in case Page needs more time to draw
+'  {bShowDebug} whether to log messages or skip (typically when syncing)
+' Returns T/F where T indicates success
     if (bShowDebug)
         debug("Navigating to page ", sdec_(pageIndex), " ...")
 
@@ -276,13 +269,9 @@ PUB getPage() : pageIdx
     pageIdx := getPageShowingDebug(FALSE)
 
 PRI getPageShowingDebug(bShowDebug) : pageIdx
-    {
-    Returns the index of the current page displayed by the connected device.
-    Args
-        void.
-    Returns
-        integer corresponding to current page index.
-    }
+' get the index of the current page displayed by the connected device
+'  {bShowDebug} whether to log messages or skip (typically when syncing)
+' Return the current page index
     if (bShowDebug)
         debug("Querying active page ....")
 
@@ -385,163 +374,92 @@ PUB setSpectrumValue(spectrumId, gaugeIndex, widgetValue) : bDidSucceed
     bDidSucceed := setWidgetValueById(spectrumId, (gaugeIndex << 8) | widgetValue)
 
 PUB setLedSpectrumValue(ledSpectrumIndex, gaugeIndex, widgetValue) : bDidSucceed | widgetId
-        {
-        Sets the value of specifically LED Spectrum widgets based on the gauge index.
-        Args
-            ledSpectrumIndex
-                - the index of the desired LED Spectrum widget.
-                Value must be within the uint8 datatype range.
+'' Sets the value of specific LED Spectrum widgets based on the gauge index
+''  {ledSpectrumIndex} the index of the desired LED Spectrum widget. Value must be within the uint8 datatype range.
+''  {gaugeIndex} the gauge index within the target LED Spectrum widget. Value must be within the uint8 datatype range.
+''  {widgetValue} the value the corresponding widget will be set to. Value must be within the uint8 datatype range.
+'' Returns T/F where T indicates success
+    check_argument_value(@"gaugeIndex", gaugeIndex, RTE_UINT8)
+    check_argument_value(@"value", widgetValue, RTE_UINT8)
 
-            gaugeIndex
-                - the gauge index within the target LED Spectrum widget.
-                Value must be within the uint8 datatype range.
-
-            widgetValue
-                - the value the corresponding widget will be set to.
-                Value must be within the uint8 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"gaugeIndex", gaugeIndex, RTE_UINT8)
-        check_argument_value(@"value", widgetValue, RTE_UINT8)
-
-        widgetId := getWidgetId(MATES_LED_SPECTRUM, ledSpectrumIndex)
-        bDidSucceed := setWidgetValueById(widgetId, (gaugeIndex << 8) | widgetValue)
+    widgetId := getWidgetId(MATES_LED_SPECTRUM, ledSpectrumIndex)
+    bDidSucceed := setWidgetValueById(widgetId, (gaugeIndex << 8) | widgetValue)
 
 PUB setMediaSpectrumValue(mediaIndex, gaugeIndex, widgetValue) : bDidSucceed | widgetId
-        {
-        Sets the value of specifically Media Spectrum widgets
-        based on the Media Spectrum index and the gauge index.
-        Args
-            mediaIndex
-                - the index of the Media Spectrum widget.
-                Value must be within the uint8 datatype range.
+'' Sets the value of specific Media Spectrum widgets based on the Media Spectrum index and the gauge index.
+''  {mediaIndex} the index of the Media Spectrum widget. Value must be within the uint8 datatype range.
+''  {gaugeIndex}  the index of the desired gauge. Value must be within the uint8 datatype range.
+''  {widgetValue}  the value the corresponding widget will be set to. Value must be within the uint8 datatype range.
+'' Returns T/F where T indicates success
+    check_argument_value(@"gaugeIndex", gaugeIndex, RTE_UINT8)
+    check_argument_value(@"value", widgetValue, RTE_UINT8)
 
-            gaugeIndex
-                - the index of the desired gauge.
-                Value must be within the uint8 datatype range.
-
-            widgetValue
-                - the value the corresponding widget will be set to.
-                Value must be within the uint8 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"gaugeIndex", gaugeIndex, RTE_UINT8)
-        check_argument_value(@"value", widgetValue, RTE_UINT8)
-
-        widgetId := getWidgetId(MATES_MED_SPECTRUM, mediaIndex)
-        bDidSucceed := setWidgetValueById(widgetId, (gaugeIndex << 8) | widgetValue)
+    widgetId := getWidgetId(MATES_MED_SPECTRUM, mediaIndex)
+    bDidSucceed := setWidgetValueById(widgetId, (gaugeIndex << 8) | widgetValue)
 
 PUB setWidgetParamById(widgetId, param, widgetValue) : bDidSucceed
-        {
-        Sets the value of a widget parameter based on widget id and parameter id.
-        Args
-            widgetId
-                - the unique id of the target widget.
-                Value must be within the int16 datatype range.
+'' Sets the value of a widget parameter based on widget id and parameter id.
+''  {widgetId} the unique id of the target widget. Value must be within the int16 datatype range.
+''  {param} the unique id of the target parameter. Value must be within the int16 datatype range.
+''  {widgetValue} the value the corresponding parameter will be set to. Value must be within the int16 datatype range.
+'' Returns T/F where T indicates success
+    check_argument_value(@"widgetId", widgetId, RTE_INT16)
+    check_argument_value(@"param", param, RTE_INT16)
+    check_argument_value(@"value", widgetValue, RTE_INT16)
 
-            param
-                - the unique id of the target parameter.
-                Value must be within the int16 datatype range.
+    debug("Set widget (", uhex_(widgetId), ") parameter (", uhex_(param), ") to {", udec_(widgetValue), "} ...")
 
-            widgetValue
-                - the value the corresponding parameter will be set to.
-                Value must be within the int16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"widgetId", widgetId, RTE_INT16)
-        check_argument_value(@"param", param, RTE_INT16)
-        check_argument_value(@"value", widgetValue, RTE_INT16)
+    write_command(MATES_CMD_SET_WIDGET_PARAM)
+    write_int16(widgetId)
+    write_int16(param)
+    write_int16(widgetValue)
 
-        debug("Set widget (", uhex_(widgetId), ") parameter (", uhex_(param), ") to {", udec_(widgetValue), "} ...")
-
-        write_command(MATES_CMD_SET_WIDGET_PARAM)
-        write_int16(widgetId)
-        write_int16(param)
-        write_int16(widgetValue)
-
-        bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB getWidgetParamById(widgetId, param) : targetParamValue
-        {
-        Gets the value of a widget parameter based on widget id and parameter id.
-        Args
-            widgetId
-                - the unique id of the target widget.
-                Value must be within the int16 datatype range.
+'' Gets the value of a widget parameter based on widget id and parameter id.
+''  {widgetId} the unique id of the target widget. Value must be within the int16 datatype range.
+''  {param} the unique id of the target parameter. Value must be within the int16 datatype range.
+'' Returns and integer containing the target parameter value.
+    check_argument_value(@"widgetId", widgetId, RTE_INT16)
+    check_argument_value(@"param", param, RTE_INT16)
 
-            param
-                - the unique id of the target parameter.
-                Value must be within the int16 datatype range.
-        Returns
-            integer response indicating target parameter value.
-        }
-        check_argument_value(@"widgetId", widgetId, RTE_INT16)
-        check_argument_value(@"param", param, RTE_INT16)
+    debug("Query widget (", uhex_(widgetId), ") parameter (", uhex_(param), ") ...")
 
-        debug("Query widget (", uhex_(widgetId), ") parameter (", uhex_(param), ") ...")
+    write_command(MATES_CMD_GET_WIDGET_PARAM)
+    write_int16(widgetId)
+    write_int16(param)
 
-        write_command(MATES_CMD_GET_WIDGET_PARAM)
-        write_int16(widgetId)
-        write_int16(param)
-
-        targetParamValue := read_response()
+    targetParamValue := read_response()
 
 PUB setWidgetParamByIndex(widgetType, widgetIndex, param, widgetValue) : bDidSucceed | widgetId
-        {
-        Sets the value of a widget parameter based on widget index and parameter id.
-        Args
-            widgetType
-                - the type of the target widget.
+'' Sets the value of a widget parameter based on widget index and parameter id.
+''  {widgetType} the type of the target widget.
+''  {widgetIndex} the index of the target widget. Value must be within the uint8 datatype range.
+''  {param} the unique id of the target parameter. Value must be within the int16 datatype range.
+''  {widgetValue} the value the corresponding parameter will be set to. Value must be within the int16 datatype range.
+'' Returns T/F where T indicates success
+    check_argument_value(@"widgetIndex", widgetIndex, RTE_UINT8)
+    check_argument_value(@"param", param, RTE_INT16)
+    check_argument_value(@"value", widgetValue, RTE_INT16)
 
-            widgetIndex
-                - the index of the target widget.
-                Value must be within the uint8 datatype range.
-
-            param
-                - the unique id of the target parameter.
-                Value must be within the int16 datatype range.
-
-            widgetValue
-                - the value the corresponding parameter will be set to.
-                Value must be within the int16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"widgetIndex", widgetIndex, RTE_UINT8)
-        check_argument_value(@"param", param, RTE_INT16)
-        check_argument_value(@"value", widgetValue, RTE_INT16)
-
-        widgetId := getWidgetId(widgetType, widgetIndex)
-        bDidSucceed := setWidgetParamById(widgetId, param, widgetValue)
+    widgetId := getWidgetId(widgetType, widgetIndex)
+    bDidSucceed := setWidgetParamById(widgetId, param, widgetValue)
 
 PUB getWidgetParamByIndex(widgetType, widgetIndex, param) : widgetValue | widgetId
-        {
-        Gets the value of a widget parameter based on widget index and parameter id.
-        Args
-            widgetType
-                - the type of the target widget.
+'' Gets the value of a widget parameter based on widget index and parameter id.
+''  {widgetType} the type of the target widget.
+''  {widgetIndex} the index of the target widget. Value must be within the uint8 datatype range.
+''  {param} the unique id of the target parameter. Value must be within the int16 datatype range.
+'' Returns {widgetValue} the target parameter value
+    check_argument_value(@"widgetIndex", widgetIndex, RTE_UINT8)
+    check_argument_value(@"param", param, RTE_INT16)
 
-            widgetIndex
-                - the index of the target widget.
-                Value must be within the uint8 datatype range.
-
-            param
-                - the unique id of the target parameter.
-                Value must be within the int16 datatype range.
-        Returns
-            integer response indicating target parameter value.
-        }
-        check_argument_value(@"widgetIndex", widgetIndex, RTE_UINT8)
-        check_argument_value(@"param", param, RTE_INT16)
-
-        widgetId := getWidgetId(widgetType, widgetIndex)
-        widgetValue := getWidgetParamById(widgetId, param)
+    widgetId := getWidgetId(widgetType, widgetIndex)
+    widgetValue := getWidgetParamById(widgetId, param)
 
 PUB setBufferSize(size)
-'' setBufferSize(size): Currently not supported
+'' setBufferSize(size): Currently NOT SUPPORTED
         {
         Currently unused (also undocumented).
         Sets Buffer Size. Provided for future development.
@@ -560,41 +478,23 @@ PUB setBufferSize(size)
 
 PUB clearTextArea(textAreaIndex) : bDidSucceed
 '' Clears a targeted Text Area
-        {
-        Args
-            textAreaIndex
-                - the index of the target Text Area widget.
-                Value must be within the uint16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
-        check_argument_value(@"textAreaIndex", textAreaIndex, RTE_UINT16)
+''  {textAreaIndex} the index of the target Text Area widget. Value must be within the uint16 datatype range.
+'' Returns T/F where T indicates success
+    check_argument_value(@"textAreaIndex", textAreaIndex, RTE_UINT16)
 
-        debug("Clear TextArea ", udec_word_(textAreaIndex), " ...")
+    debug("Clear TextArea ", udec_word_(textAreaIndex), " ...")
 
-        write_command(MATES_CMD_UPDATE_TEXT_AREA)
-        write_int16(textAreaIndex)
-        write_int8(0)
+    write_command(MATES_CMD_UPDATE_TEXT_AREA)
+    write_int16(textAreaIndex)
+    write_int8(0)
 
-        bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB updateTextArea(textAreaIndex, pString) : bDidSucceed
 '' Updates the text displayed within Text Area widget
-        {
-        Args
-            textAreaIndex
-                - the index of the target Text Area widget.
-                Value must be within the uint16 datatype range.
-
-            pTextFormat
-                - the string format to be displayed.
-
-            formatArgs
-                - zero or more values to be formatted into the provided
-                text format string.
-        Returns
-            boolean response indicating command success or failure.
-        }
+''  {textAreaIndex} the index of the target Text Area widget. Value must be within the uint16 datatype range.
+''  {pString} the string to be displayed. Must be a zero terminated string.
+'' Returns T/F where T indicates success
         check_argument_value(@"textAreaIndex", textAreaIndex, RTE_UINT16)
 
         debug("Update TextArea ", udec_word_(textAreaIndex), " ...")
@@ -607,15 +507,9 @@ PUB updateTextArea(textAreaIndex, pString) : bDidSucceed
         bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB clearPrintArea(printAreaIndex) : bDidSucceed
-        {
-        Clears a targeted Print Area.
-        Args
-            printAreaIndex
-                - the index of the target Print Area widget.
-                Value must be within the uint16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
+'' Clears a targeted Print Area
+''  {printAreaIndex} the index of the target Print Area widget. Value must be within the uint16 datatype range.
+'' Returns T/F where T indicates success
         check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
 
         debug("Clear PrintArea ", udec_word_(printAreaIndex), " ...")
@@ -626,17 +520,10 @@ PUB clearPrintArea(printAreaIndex) : bDidSucceed
         bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB setPrintAreaColor565(printAreaIndex, rgb565Value) : bDidSucceed
-        {
-        Sets the color of a PrintArea Widget based on an rgb565 value.
-        Args
-            printAreaIndex
-            - index of widget, value must be within uint16 datatype range.
-
-            rgb565
-            - colour to set widget to, value must be within uint16 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
+'' Sets the color of a PrintArea Widget based on an rgb565 value
+''  {printAreaIndex} the index of the target Print Area widget. Value must be within the uint16 datatype range
+''  {rgb565Value} the color to set widget to. Value must be within the uint16 datatype range.
+'' Returns T/F where T indicates success
         check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
         check_argument_value(@"rgb565", rgb565Value, RTE_UINT16)
 
@@ -649,27 +536,12 @@ PUB setPrintAreaColor565(printAreaIndex, rgb565Value) : bDidSucceed
         bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB setPrintAreaColorRGB(printAreaIndex, redValue, greenValue, blueValue) : bDidSucceed | rgb565Value
-        {
-        Sets the colour of a targeted Print Area.
-        Args
-            printAreaIndex
-                - the index of the target Print Area widget.
-                Value must be within the uint16 datatype range.
-
-            redValue
-                - Unsigned 8 bit integer value of red concentration.
-                Value must be within the uint8 datatype range.
-
-            greenValue
-                - Unsigned 8 bit integer value of green concentration.
-                Value must be within the uint8 datatype range.
-
-            blueValue
-                - Unsigned 8 bit integer value of blue concentration.
-                Value must be within the uint8 datatype range.
-        Returns
-            boolean response indicating command success or failure.
-        }
+'' Sets the color of a PrintArea Widget
+''  {printAreaIndex} the index of the target Print Area widget. Value must be within the uint16 datatype range
+''  {redValue} the red concentration of the color to set widget to. Value must be within the uint8 datatype range
+''  {greenValue} the green concentration of the color to set widget to. Value must be within the uint8 datatype range
+''  {blueValue} the blue concentration of the color to set widget to. Value must be within the uint8 datatype range
+'' Returns T/F where T indicates success
         check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
         check_argument_value(@"red", redValue, RTE_UINT8)
         check_argument_value(@"green", greenValue, RTE_UINT8)
@@ -1146,6 +1018,7 @@ PRI initRange(nType, nRngMin, nRngMax) | offset
     datatype_ranges[offset+ 1] := nRngMax
 
 PRI getRangeForType(eRangeType) : nRangeMin, nRangeMax
+' return the current range for a given type
     if eRangeType >= 0 and eRangeType < RTE_MAX
         nRangeMin := datatype_ranges[eRangeType * TYPE_RANGE_ENTRY_LONG_CT + 0]
         nRangeMax := datatype_ranges[eRangeType * TYPE_RANGE_ENTRY_LONG_CT + 1]
@@ -1154,6 +1027,7 @@ PRI getRangeForType(eRangeType) : nRangeMin, nRangeMax
         nRangeMax := 0
 
 PRI stringForRangeType(eRangeType) : pTypeString
+' return the name as string for a given type
     case eRangeType
         RTE_UINT8: pTypeString := @"UINT8"
         RTE_INT8: pTypeString := @"INT8"
