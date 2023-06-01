@@ -495,45 +495,45 @@ PUB updateTextArea(textAreaIndex, pString) : bDidSucceed
 ''  {textAreaIndex} the index of the target Text Area widget. Value must be within the uint16 datatype range.
 ''  {pString} the string to be displayed. Must be a zero terminated string.
 '' Returns T/F where T indicates success
-        check_argument_value(@"textAreaIndex", textAreaIndex, RTE_UINT16)
+    check_argument_value(@"textAreaIndex", textAreaIndex, RTE_UINT16)
 
-        debug("Update TextArea ", udec_word_(textAreaIndex), " ...")
+    debug("Update TextArea ", udec_word_(textAreaIndex), " ...")
 
-        write_command(MATES_CMD_UPDATE_TEXT_AREA)
-        write_int16(textAreaIndex)
-        write_string(pString)   ' no zero term byte!
-        write_int8(0)           ' add zero term byte!
+    write_command(MATES_CMD_UPDATE_TEXT_AREA)
+    write_int16(textAreaIndex)
+    write_string(pString)   ' no zero term byte!
+    write_int8(0)           ' add zero term byte!
 
-        bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB clearPrintArea(printAreaIndex) : bDidSucceed
 '' Clears a targeted Print Area
 ''  {printAreaIndex} the index of the target Print Area widget. Value must be within the uint16 datatype range.
 '' Returns T/F where T indicates success
-        check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
+    check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
 
-        debug("Clear PrintArea ", udec_word_(printAreaIndex), " ...")
+    debug("Clear PrintArea ", udec_word_(printAreaIndex), " ...")
 
-        write_command(MATES_CMD_CLR_PRINT_AREA)
-        write_int16(printAreaIndex)
+    write_command(MATES_CMD_CLR_PRINT_AREA)
+    write_int16(printAreaIndex)
 
-        bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB setPrintAreaColor565(printAreaIndex, rgb565Value) : bDidSucceed
 '' Sets the color of a PrintArea Widget based on an rgb565 value
 ''  {printAreaIndex} the index of the target Print Area widget. Value must be within the uint16 datatype range
 ''  {rgb565Value} the color to set widget to. Value must be within the uint16 datatype range.
 '' Returns T/F where T indicates success
-        check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
-        check_argument_value(@"rgb565", rgb565Value, RTE_UINT16)
+    check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
+    check_argument_value(@"rgb565", rgb565Value, RTE_UINT16)
 
-        write_command(MATES_CMD_SET_PRINT_COLR)
-        write_int16(printAreaIndex)
-        write_uint16(rgb565Value)
+    write_command(MATES_CMD_SET_PRINT_COLR)
+    write_int16(printAreaIndex)
+    write_uint16(rgb565Value)
 
-        debug("Set PrintArea (", udec_(printAreaIndex), ") color to {", uhex_(rgb565Value), "} ...")
+    debug("Set PrintArea (", udec_(printAreaIndex), ") color to {", uhex_(rgb565Value), "} ...")
 
-        bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_TIMEOUT)
 
 PUB setPrintAreaColorRGB(printAreaIndex, redValue, greenValue, blueValue) : bDidSucceed | rgb565Value
 '' Sets the color of a PrintArea Widget
@@ -542,14 +542,14 @@ PUB setPrintAreaColorRGB(printAreaIndex, redValue, greenValue, blueValue) : bDid
 ''  {greenValue} the green concentration of the color to set widget to. Value must be within the uint8 datatype range
 ''  {blueValue} the blue concentration of the color to set widget to. Value must be within the uint8 datatype range
 '' Returns T/F where T indicates success
-        check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
-        check_argument_value(@"red", redValue, RTE_UINT8)
-        check_argument_value(@"green", greenValue, RTE_UINT8)
-        check_argument_value(@"blue", blueValue, RTE_UINT8)
+    check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
+    check_argument_value(@"red", redValue, RTE_UINT8)
+    check_argument_value(@"green", greenValue, RTE_UINT8)
+    check_argument_value(@"blue", blueValue, RTE_UINT8)
 
-        rgb565Value := construct_rgb565_value(redValue, greenValue, blueValue)
+    rgb565Value := construct_rgb565_value(redValue, greenValue, blueValue)
 
-        bDidSucceed := setPrintAreaColor565(printAreaIndex, rgb565Value)
+    bDidSucceed := setPrintAreaColor565(printAreaIndex, rgb565Value)
 
 PUB appendArrayToPrintArea(printAreaIndex, pBytes, byteCount) : bDidSucceed | char, byteIdx
 '' Appends {pBytes} a list of integers to the {printAreaIndex} Print Area widget
@@ -557,36 +557,36 @@ PUB appendArrayToPrintArea(printAreaIndex, pBytes, byteCount) : bDidSucceed | ch
 ''  {pBytes} pointer to list of uint8 values to be appended to Print Area widget
 ''  {byteCount} the number of uint8 values to be appended
 '' Returns T/F where T indicates success
-        check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
+    check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
 
-        debug("Append byte array to PrintArea ", udec_word_(printAreaIndex), " ...")
+    debug("Append byte array to PrintArea ", udec_word_(printAreaIndex), " ...")
 
-        write_command(MATES_CMD_APPEND_PRINT_AREA)
-        write_int16(printAreaIndex)
-        write_int16(byteCount)
-        repeat byteIdx from 0 to byteCount - 1
-            char := BYTE[pBytes][byteIdx]
-            check_argument_value(@"print area array item", char, RTE_UINT8)
-            write_uint8(char)
+    write_command(MATES_CMD_APPEND_PRINT_AREA)
+    write_int16(printAreaIndex)
+    write_int16(byteCount)
+    repeat byteIdx from 0 to byteCount - 1
+        char := BYTE[pBytes][byteIdx]
+        check_argument_value(@"print area array item", char, RTE_UINT8)
+        write_uint8(char)
 
-        bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB appendStringToPrintArea(printAreaIndex, pString) : bDidSucceed
 '' Appends {pString} to the {printAreaIndex} Print Area widget
 ''  {printAreaIndex} index of the target Print Area widget
 ''  {pString} the string to be appended to the Print Area
 '' Returns T/F where T indicates success
-        check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
+    check_argument_value(@"printAreaIndex", printAreaIndex, RTE_UINT16)
 
-        debug("Append string [", zstr_(pString), "] to PrintArea ", udec_word_(printAreaIndex), " ...")
+    debug("Append string [", zstr_(pString), "] to PrintArea ", udec_word_(printAreaIndex), " ...")
 
-        write_command(MATES_CMD_APPEND_PRINT_AREA)
-        write_int16(printAreaIndex)
+    write_command(MATES_CMD_APPEND_PRINT_AREA)
+    write_int16(printAreaIndex)
 
-        write_int16(strsize(pString))
-        write_string(pString)   ' no zero term byte!
+    write_int16(strsize(pString))
+    write_string(pString)   ' no zero term byte!
 
-        bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB appendToScopeWidget(scopeIndex, pWordBuffer, countWords) : bDidSucceed
 '' Appends {pWordBuffer} a list of integers to the {scopeIndex} Scope widget
@@ -594,116 +594,88 @@ PUB appendToScopeWidget(scopeIndex, pWordBuffer, countWords) : bDidSucceed
 ''  {pWordBuffer} pointer to list of uint16 values to be appended to scope widget
 ''  {countWords} the number of uint16 values to be appended
 '' Returns T/F where T indicates success
+    check_argument_value(@"scopeIndex", scopeIndex, RTE_UINT16)
 
-        check_argument_value(@"scopeIndex", scopeIndex, RTE_UINT16)
+    debug("Appending values to Scope ", udec_word(scopeIndex), " ...")
 
-        debug("Appending values to Scope ", udec_word(scopeIndex), " ...")
+    write_command(MATES_CMD_APPEND_SCOPE_DATA)
+    write_int16(scopeIndex)
+    write_int16(countWords)
+    write_int16_buffer(pWordBuffer, countWords)
 
-        write_command(MATES_CMD_APPEND_SCOPE_DATA)
-        write_int16(scopeIndex)
-        write_int16(countWords)
-        write_int16_buffer(pWordBuffer, countWords)
-
-        bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB updateDotMatrixWidget(matrixIndex, pString) : bDidSucceed | string_to_write
 '' Writes {pString} to the {matrixIndex} Dot Matrix widget
 ''  {matrixIndex} index of the target widget
 ''  {pString} pointer to zero terminated string to be displayed
 '' Returns T/F where T indicates success
+    check_argument_value(@"matrix_index", matrixIndex, RTE_UINT16)
 
-        check_argument_value(@"matrix_index", matrixIndex, RTE_UINT16)
+    'debug("Updating DotMatrix ", udec_word_(matrixIndex), " ...")
 
-        'debug("Updating DotMatrix ", udec_word_(matrixIndex), " ...")
+    write_command(MATES_CMD_UPDATE_DOT_MATRIX)
+    write_int16(matrixIndex)
+    write_int16(strsize(pString))
+    write_string(pString)   ' no zero term byte!
 
-        write_command(MATES_CMD_UPDATE_DOT_MATRIX)
-        write_int16(matrixIndex)
-        write_int16(strsize(pString))
-        write_string(pString)   ' no zero term byte!
-
-        bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
+    bDidSucceed := waitForAck(MATES_RESPONSE_LTIMEOUT)
 
 PUB getButtonEventCount() : countButtonEvents
 '' Gets the number of events recorded from applicable button widgets
 '' Returns {countButtonEvents} the number of events recorded
-        debug("Query number of button events...")
+    debug("Query number of button events...")
 
-        write_command(MATES_CMD_BTN_EVENT_COUNT)
+    write_command(MATES_CMD_BTN_EVENT_COUNT)
 
-        countButtonEvents := read_response()
+    countButtonEvents := read_response()
 
 PUB getNextButtonEvent() : widgetId
 '' Gets the next event source logged from applicable buttons
 '' Returns {widgetId} an integer corresponding to the button widget ID
+    debug("Query the next recorded button event...")
 
-        debug("Query the next recorded button event...")
+    write_command(MATES_CMD_NEXT_BTN_EVENT)
 
-        write_command(MATES_CMD_NEXT_BTN_EVENT)
-
-        widgetId := read_response()
+    widgetId := read_response()
 
 PUB getSwipeEventCount(): eventCount
 '' Gets the number of events recorded from swipe gestures
 '' Returns {eventCount} an integer corresponding to the number of events
+    debug("Query number of swipe events...")
 
-        debug("Query number of swipe events...")
+    write_command(MATES_CMD_SWP_EVENT_COUNT)
 
-        write_command(MATES_CMD_SWP_EVENT_COUNT)
-
-        eventCount := read_response()
+    eventCount := read_response()
 
 PUB getNextSwipeEvent() : swipeEvent
 '' Gets the next swipe event value
 '' Returns {swipeEvent} an integer corresponding to the swipe event
+    debug("Query the next recorded swipe event...")
 
-        debug("Query the next recorded swipe event...")
+    write_command(MATES_CMD_NEXT_SWP_EVENT)
 
-        write_command(MATES_CMD_NEXT_SWP_EVENT)
-
-        swipeEvent := read_response()
+    swipeEvent := read_response()
 
 PUB getVersion() : pVerString
-        {
-        Helper function to obtain the version of the Python Mates Controller library.
-        Args
-            void.
-        Returns
-            string response of library version.
-        }
-        pVerString := @matesControllerLibVer
+'' Helper function to obtain the version of the Python Mates Controller library
+'' Returns {pVerString} string response of library version
+    pVerString := @matesControllerLibVer
 
 PUB getCompatibility() : pVerString
-        {
-        Helper function to obtain the version of the Mates Studio compatible
-        with this library version.
-        Args
-            void.
-        Returns
-            string response of Mates Studio version compatible with this library.
-        }
-        pVerString := @matesStudioCompatVer
+'' Helper function to obtain the version of the Mates Studio compatible with this library version
+'' Returns {pVerString} string response of Mates Studio version compatible with this library
+    pVerString := @matesStudioCompatVer
 
 PUB printVersion()
-        {
-        Debugging function to print the version of the Mates Studio compatible
-        along with this specific library version.
-        Args
-            void.
-        Returns
-            void.
-        }
-        debug("Mates Studio - Compatible Version : ", zstr_(getCompatibility()))
-        debug("Mates Controller - Library Version: ", zstr_(getVersion()))
+'' Debugging function to print the version of the Mates Studio compatible along with this specific library version.
+    debug("Mates Studio - Compatible Version : ", zstr_(getCompatibility()))
+    debug("Mates Controller - Library Version: ", zstr_(getVersion()))
 
 PUB getError() : latestError
-        {
-        Function to return the current error state of the Mates Controller.
-        Args
-            void.
-        Returns
-            MatesError response of current error.
-        }
-        latestError := matesError
+'' Helper function to obtain the current error state of the Mates Controller
+'' REturns {latestError} MatesError response of current error
+    latestError := matesError
 
 
 PUB takeScreenshot() : bDidSucceed, pImage | w, h
