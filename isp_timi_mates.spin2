@@ -193,9 +193,9 @@ PUB softReset() : bDidSucceed | startTimeMSec, timeDeltaMSec
     else
         debug("Timed out after ", udec_(timeDeltaMSec), " ms")
 
-PUB sync(bResetToPage0, timeout) : bDidSucceed | page, startTimeMSec
-'' Attempts to synchronize with the display module by sending simple read page commands
-''  at certain interval until a proper response is received
+PRI sync(bResetToPage0, timeout) : bDidSucceed | page, startTimeMSec
+' Attempts to synchronize with the display module by sending simple read page commands
+'  at certain interval until a proper response is received
     debug("TIMI: Synchronizing with the module...")
     bDidSucceed :=  TRUE
     page := -1
