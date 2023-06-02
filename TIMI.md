@@ -13,8 +13,8 @@ A reusable object written in spin2 for driving the TIMI serial IPS LCD-TFT displ
 On this Page:
 
 - [The Hardware](#the-hardware)
-- [The Public Interface](#the-rotary-encoder-object-public-interface)
-- [The Source Code](#the-object-source-code)
+- [The Public Interface](#the-timi-object-public-interface)
+- [The Source Code](#the-source-code)
 
 Additional pages:
 
