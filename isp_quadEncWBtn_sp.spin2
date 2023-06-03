@@ -7,7 +7,7 @@
 ''               -- see below for terms of use
 ''   E-mail..... stephen@ironsheep.biz
 ''   Started.... May 2023
-''   Updated.... 12 May 2023
+''   Updated.... 2 Jun 2023
 ''
 '' =================================================================================================
 ''
@@ -20,6 +20,10 @@ CON { app constants }
 
     DEFAULT_ENC_SCALE = 4
 
+    DEBOUNCE_IN_MS = 125
+
+    REPORT_INTERVAL_IN_MS = 1200
+
 VAR ' driver variables
 
     LONG    quadEncCog
@@ -28,8 +32,6 @@ VAR ' driver variables
     LONG    encPriorPosition
     LONG    encSampleCt
     LONG    encScale
-
-    LONG    btnPressCount
 
     ' values from TASK for BUTTON press
     LONG    taskPressCount
@@ -149,10 +151,13 @@ VAR ' TASK instance variables
     LONG    btnSample
     LONG    btnPriorSample
     LONG    btnChanged
-    LONG    btnSampleCount
+    LONG    btnEdgeCount
     LONG    timeNowMS
-    LONG    priorEdgeTimeMS
+    LONG    timePriorEdgeMS
     LONG    timeSinceEdgeMS
+    LONG    timePriorPressMS
+    LONG    timeSincePressMS
+    LONG    btnPressCount
 
 PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpEncRate, lastReportTimeMS, fallingEdgeCt
 ' read quad encoder signals attached to smart pins, update postion based on change
@@ -178,10 +183,12 @@ PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpE
     encPosition := 0
     encPriorPosition := -1
     encSampleCt := -1
-    btnPriorSample := -1
+    btnPriorSample := 1
     lastReportTimeMS := getms()
+    timeSinceEdgeMS := DEBOUNCE_IN_MS + 1
     fallingEdgeCt := 0
-    priorEdgeTimeMS := 0
+    btnPressCount := 0
+    btnEdgeCount := 0
     repeat
         ' check rotary - count
         tmpEncPosition := rdpin(pinEnc0) >> 2 signx 29 ' div by 4
@@ -202,22 +209,37 @@ PRI TaskContinuousEncoderSmartPin() | sampleRate, bDataRdy, tmpEncPosition, tmpE
 
         ' check button
         timeNowMS := getms()
-        timeSinceEdgeMS := timeNowMS - priorEdgeTimeMS
         btnSample := ina.[pinEncBtn]
-        if (btnPriorSample <> btnSample and btnSampleCount == 0) or (btnPriorSample <> btnSample and  timeSinceEdgeMS > 150)                ' > 300 mSec (debounce)
-            priorEdgeTimeMS := timeNowMS
-            'debug("TASK: btn Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms")
-            btnSampleCount++
-            btnPriorSample := btnSample
-            if btnSample == 0
-                fallingEdgeCt++
-        if timeNowMS > lastReportTimeMS + 1200 and btnSample == 1
-            taskPressCount := fallingEdgeCt
-            taskPressSampleNbr := btnSampleCount
-            fallingEdgeCt := 0
+        ' iff have EDGE
+        if btnPriorSample <> btnSample
+            timeSinceEdgeMS := timeNowMS - timePriorEdgeMS
+            ' DEBOUNCE (edges only outside of debounce window)
+            'debug("TASK: btn ??? Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms")
+            if timeSinceEdgeMS > DEBOUNCE_IN_MS
+                timePriorEdgeMS := timeNowMS
+                btnEdgeCount++  ' only count debounced edges
+                ' iff have falling edge (PRESS)
+                if btnSample == 0
+                    timeSincePressMS := timeNowMS - timePriorPressMS
+                    timePriorPressMS := timeNowMS
+                    btnPressCount++
+                '    debug("TASK: btn PRS Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms, pressTm=", udec_(timeSincePressMS), "ms")
+                'else
+                    ' have rising edge (RELEASE)
+                '    debug("TASK: btn RLS Edge [", udec_(btnPriorSample), " -> ", udec_(btnSample), "] tm=", udec_(timeSinceEdgeMS), "ms")
+                btnPriorSample := btnSample
+        ' iff time to report...
+        if timeNowMS > lastReportTimeMS + REPORT_INTERVAL_IN_MS
+            if btnPressCount <> 0
+                taskPressCount := btnPressCount
+                taskPressSampleNbr := btnEdgeCount
+                'if taskPressCount > 0
+                '    debug("TASK: btn PRESS Ct ", udec_(btnPressCount), ", #", udec_(taskPressSampleNbr))
+                btnPressCount := 0
+            else
+                taskPressCount := 0
+                taskPressSampleNbr := 0
             lastReportTimeMS := timeNowMS
-            'if taskPressCount > 0
-                'debug("TASK: btn Edge Ct ", udec_(taskPressCount), ", #", udec_(btnSampleCount))
 
 CON { license }
 
