@@ -156,16 +156,20 @@ PUB main() | pageId, bDidSucceed, currPosn, currRate, tmpOffset, bIsPressed, bIs
         repeat
             bIsPressed, bIsDouble :=  quadEnc.isButtonPressed()
             if bIsPressed
-                'debug("* Button Pressed, isDbl=", sdec_(bIsDouble))
+                ' debug("* Button Pressed, isDbl=", sdec_(bIsDouble))
+
+                ' select next/prior servo
                 incre := (bIsDouble) ? -1 : +1
-                    'pcaServos.gotoMicroSec(servoIdx, SRVO_OFST_CNTR)            ' reset to center as we leave
                 servoIdx += incre
                 if servoIdx >= MAX_SERVOS
                     servoIdx := 0
-                    'pcaServos.gotoMicroSec(servoIdx, SRVO_OFST_CNTR)            ' reset to center as we leave
                 if servoIdx < 0
                     servoIdx := MAX_SERVOS - 1
+
+                ' get last known position
                 servoOffset := pcaServos.getMicroSec(servoIdx)                  ' get last known position
+
+                ' write to display
                 updateStateDisplay()
 
             deltaPosition := quadEnc.positionScaled()

@@ -12,9 +12,9 @@ A reusable object written in spin2 for driving the TIMI serial IPS LCD-TFT displ
 
 On this Page:
 
-- [Features](#features)
-- Pictures of this project in use
-- [How to contribute](#how-to-contribute)
+- [The Hardware](#the-hardware)
+- [The Public Interface](#the-timi-object-public-interface)
+- [The Source Code](#the-source-code)
 
 Additional pages:
 
@@ -32,9 +32,60 @@ Here is the [TIMI-130](https://breadboardmates.com/products/timi-130/) I'm using
 ![](./DOCs/images/timi-130-features-image-new-1-e1632995287139.png)
 
 
-## The TIMI Spin2 Object
+## The TIMI object PUBLIC Interface
 
-The Object is contained in one file `isp_timi_mates.spin2`. 
+The object **isp\_timi_mates.spin2** when first started configures the serial pins at the requested baud rate [Default: 9600]. 
+
+The object provides the following methods for starting up, tearing down and accessing the values read from the device and writing values to the device:
+
+| OBJECT Interface | Description |
+| --- | --- |
+|  **>--- SETUP**
+| PUB  start(pinTx, pinRx, pinReset, baudRate) : bDidSucceed | Start simple serial comms on given pins at baudrate
+| PUB  stop() | Stop underlying serial device and release pins
+| PUB  error() : latestError | Return latest Mates Error Code
+| PUB  hardReset() : bDidSucceed | Uses hardware driven signal to hard reset Timi device<br> Returns the boolean response from the reset
+| PUB  softReset() : bDidSucceed | Sends a serial command to the connected Timi device to trigger a reset<br> Returns the boolean response from the reset
+| PUB  setBacklight(backlightValue) : bDidSucceed | Sets the intensity of the backlight of connected device: where {backlightValue} is [0-255]<br> Returns the boolean response from the backlight command
+|  **>--- Normal Interaction**
+| PUB  setPage(pageIndex, timeout) : bDidSucceed | Sets the page to be displayed on the connected device<br> Returns T/F where T indicates success
+| PUB  getPage() : pageIdx | Returns {pageIdx} the index of the current page displayed by the connected device
+| PUB  setWidgetValueById(widgetId, widgetValue) : bDidSucceed | Sets the value of a specific widget based on the provided identifier<br> Returns T/F where T indicates success
+| PUB  getWidgetValueById(widgetId) : widgetValue | Gets the value of a widget based on the {widgetId}<br> Returns {widgetValue} an integer corresponding to widget value.
+| <PRE>PUB  setWidgetValueByIndex(widgetType, widgetIndex, widgetValue) : bDidSucceed</PRE> | Sets the value of a specific widget based on the index within a widget type<br> Returns T/F where T indicates success
+| PUB  getWidgetValueByIndex(widgetType, widgetIndex) : widgetValue | Gets the value of a specific widget based on the index within a widget type<br> Returns {widgetValue} an integer corresponding to widget value.
+| PUB  setLedDigitsShortValue(widgetIndex, widgetValue) : bDidSucceed | Sets the value of specifically int16 LED Digits widgets based on the widget index<br> Returns T/F where T indicates success
+| PUB  setLedDigitsLongValue(widgetIndex, widgetValue) : bDidSucceed | Sets the value of specifically int32 LED Digits widgets based on the widget index<br> Returns T/F where T indicates success
+| PUB  setLedDigitsFloatValue(widgetIndex, floatWidgetValue) : bDidSucceed | Sets the value of specifically float32 LED Digits widgets based on the widget index<br> Returns T/F where T indicates success
+| PUB  setSpectrumValue(spectrumId, gaugeIndex, widgetValue) : bDidSucceed | Sets the value of specifically Spectrum widgets based the spectrum id and gauge index<br> Returns T/F where T indicates success
+| PUB  setLedSpectrumValue(ledSpectrumIndex, gaugeIndex, widgetValue) : bDidSucceed | Sets the value of specific LED Spectrum widgets based on the gauge index<br> Returns T/F where T indicates success
+| PUB  setMediaSpectrumValue(mediaIndex, gaugeIndex, widgetValue) : bDidSucceed | Sets the value of specific Media Spectrum widgets based on the Media Spectrum index and the gauge index<br> Returns T/F where T indicates success
+| PUB  setWidgetParamById(widgetId, param, widgetValue) : bDidSucceed | Sets the value of a widget parameter based on widget id and parameter id<br> Returns T/F where T indicates success
+| PUB  getWidgetParamById(widgetId, param) : targetParamValue | Gets the value of a widget parameter based on widget id and parameter id<br> Returns and integer containing the target parameter value.
+| PUB  setWidgetParamByIndex(widgetType, widgetIndex, param, widgetValue) : bDidSucceed | Sets the value of a widget parameter based on widget index and parameter id<br> Returns T/F where T indicates success
+| PUB  getWidgetParamByIndex(widgetType, widgetIndex, param) : widgetValue | Gets the value of a widget parameter based on widget index and parameter id<br> Returns {widgetValue} the target parameter value
+| PUB  clearTextArea(textAreaIndex) : bDidSucceed | Clears a targeted Text Area<br> Returns T/F where T indicates success
+| PUB  updateTextArea(textAreaIndex, pString) : bDidSucceed | Updates the text displayed within Text Area widget<br> Returns T/F where T indicates success
+| PUB  clearPrintArea(printAreaIndex) : bDidSucceed | Clears a targeted Print Area<br> Returns T/F where T indicates success
+| PUB  setPrintAreaColor565(printAreaIndex, rgb565Value) : bDidSucceed | Sets the color of a PrintArea Widget based on an rgb565 value<br> Returns T/F where T indicates success
+| PUB  setPrintAreaColorRGB(printAreaIndex, redValue, greenValue, blueValue) : bDidSucceed | Sets the color of a PrintArea Widget<br> Returns T/F where T indicates success
+| PUB  appendArrayToPrintArea(printAreaIndex, pBytes, byteCount) : bDidSucceed | Appends {pBytes} a list of integers to the {printAreaIndex} Print Area widget<br> Returns T/F where T indicates success
+| PUB  appendStringToPrintArea(printAreaIndex, pString) : bDidSucceed | Appends {pString} to the {printAreaIndex} Print Area widget<br>  Returns T/F where T indicates success
+| PUB  appendToScopeWidget(scopeIndex, pWordBuffer, countWords) : bDidSucceed | Appends {pWordBuffer} a list of integers to the {scopeIndex} Scope widget<br> Returns T/F where T indicates success
+| PUB  updateDotMatrixWidget(matrixIndex, pString) : bDidSucceed | Writes {pString} to the {matrixIndex} Dot Matrix widget<br> Returns T/F where T indicates success
+| PUB  getButtonEventCount() : countButtonEvents | Gets the number of events recorded from applicable button widgets<br> Returns {countButtonEvents} the number of events recorded
+| PUB  getNextButtonEvent() : widgetId | Gets the next event source logged from applicable buttons<br> Returns {widgetId} an integer corresponding to the button widget ID
+| PUB  getSwipeEventCount() : eventCount | Gets the number of events recorded from swipe gestures<br> Returns {eventCount} an integer corresponding to the number of events
+| PUB  getNextSwipeEvent() : swipeEvent |  Gets the next swipe event value<br> Returns {swipeEvent} an integer corresponding to the swipe event
+| PUB  getVersion() : pVerString | Helper function to obtain the version of the Python Mates Controller library<br> Returns {pVerString} string response of library version
+| PUB  getCompatibility() : pVerString | Helper function to obtain the version of the Mates Studio compatible with this library version<br> Returns {pVerString} string response of Mates Studio version compatible with this library
+| PUB  printVersion() | Debugging function to print the version of the Mates Studio compatible along with this specific library version.
+| PUB  getError() : latestError | Helper function to obtain the current error state of the Mates Controller<br> Returns {latestError} MatesError response of current error
+|  **>--- NOT Implemented**
+| PUB  setBufferSize(size) | setBufferSize(size) NOT Implemented!!
+| PUB  takeScreenshot() : bDidSucceed, pImage | takeScreenshot() NOT Implemented!!
+| PUB  saveScreenshot(pFilenameStr) : bDidSave | saveScreenshot() NOT Implemented!!
+
 
 ## The Source Code
 

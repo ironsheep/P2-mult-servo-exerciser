@@ -39,10 +39,10 @@ The driver runs a task in a single Cog which continuously monitors the rotation 
 
 ## The Rotary Encoder object PUBLIC Interface
 
-The object **isp\_quadEncWBtn_sp.spin2.spin2** when first started fires a separate monitoring task in a Spin Cog. When you read the values you are reading the latest stored values written by the monitoring task. 
+The object **isp\_quadEncWBtn_sp.spin2** when first started fires a separate monitoring task in a Spin Cog. When you read the values you are reading the latest stored values written by the monitoring task. 
 The object provides the following methods for starting up, tearing down and accessing the values read from the device:
 
-| Steering Interface | Description |
+| OBJECT Interface | Description |
 | --- | --- |
 |  **>--- CONTROL**
 | <PRE>PUB start(pnEnc0, pnEnc1, pnBtn)</PRE> | Start the sensing Cog using the given pins 
