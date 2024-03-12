@@ -73,7 +73,7 @@ PUB start(pnEnc0, pnEnc1, pnBtn) | lowPin, highPin
 
     quadEncCog := cogspin(NewCog, TaskContinuousEncoderSmartPin(), @encStack) + 1
     if not quadEncCog
-        debug("enc: ERROR: Failed to start Quad Encoder Task!  Aboting")
+        debug("enc: ERROR: Failed to start Quad Encoder Task!  Aborting")
         abort
 
 PUB stop()
