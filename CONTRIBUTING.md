@@ -3,6 +3,7 @@
 How to contribute to our P2 Projects
 
 ![Project Maintenance][maintenance-shield]
+
 [![License][license-shield]](LICENSE)
 
 Contributing
@@ -37,7 +38,7 @@ And last but not least: Always write your commit messages in the present tense. 
 
 > If you like my work and/or this has helped you in some way then feel free to help me out for a couple of :coffee:'s or :pizza: slices!
 >
-> [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep) &nbsp;&nbsp; -OR- &nbsp;&nbsp; [![Patreon](./Images/patreon.png)](https://www.patreon.com/IronSheep?fan_landing=true)[Patreon.com/IronSheep](https://www.patreon.com/IronSheep?fan_landing=true)
+> [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep) &nbsp;&nbsp; -OR- &nbsp;&nbsp; [![Patreon](./DOCs/images/patreon.png)](https://www.patreon.com/IronSheep?fan_landing=true)[Patreon.com/IronSheep](https://www.patreon.com/IronSheep?fan_landing=true)
 
 ---
 
@@ -48,8 +49,6 @@ And last but not least: Always write your commit messages in the present tense. 
 ---
 
 ## License
-
-Copyright © 2023 Iron Sheep Productions, LLC. All rights reserved.
 
 Licensed under the MIT License.
 
@@ -65,4 +64,4 @@ Follow these links for more information:
 
 [marketplace-rating]: https://vsmarketplacebadge.apphb.com/rating-short/ironsheepproductionsllc.spin2.svg
 
-[license-shield]: https://camo.githubusercontent.com/bc04f96d911ea5f6e3b00e44fc0731ea74c8e1e9/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f6c6963656e73652f69616e74726963682f746578742d646976696465722d726f772e7376673f7374796c653d666f722d7468652d6261646765
+[license-shield]: https://img.shields.io/badge/License-MIT-yellow.svg
