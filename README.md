@@ -18,6 +18,7 @@ Additional pages:
 - [The rotary Encoder object](./RotaryEnc.md) - Reusable object for reading rotary encoder with push button
 - [The TIMI Interface object](./TIMI.md) - Reusable object for driving all of the TIMI Displays
 - [The TIMI-130 Datasheet](./Docs/TIMI-130_Datasheet_REV1.0.pdf) 
+- [Testing Eyes](./Unit2UnderTest.md) - the 2nd device i exercized with this project
 
 ## Exerciser with OLED display and Rotary Encoder for control
 
