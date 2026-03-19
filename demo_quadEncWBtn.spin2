@@ -51,12 +51,13 @@ DAT
     deltaPosition   LONG    -1
     desiredOffset   LONG    0
 
-PUB main() | currPosn, currRate, tmpOffset
+PUB main() | currPosn, currRate, tmpOffset, bPressed, bDouble
 
     quadEnc.start(QUAD_ENC_CLK, QUAD_ENC_DAT, QUAD_ENC_BTN)
 
     repeat
-        if quadEnc.isButtonPressed()
+        bPressed, bDouble := quadEnc.isButtonPressed()
+        if bPressed
             debug("* Button Pressed")
         currPosn, currRate := quadEnc.positionRate()
         if currPosn <> priorPosition
