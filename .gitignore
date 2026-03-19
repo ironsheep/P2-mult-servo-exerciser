@@ -168,3 +168,4 @@ f1.spin2
 *.bin
 *.txt
 .vscode/settings.json
+*.GOLD
