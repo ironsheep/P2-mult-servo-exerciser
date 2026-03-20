@@ -8,9 +8,6 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 pass=0
 fail=0
 skip=0
-failed_files=()
-no_gold_files=()
-
 checked=0
 
 echo "=== Checking reformatted .spin2 files ==="
@@ -24,10 +21,8 @@ for file in "$PROJECT_DIR"/*.spin2; do
 
     # Skip if no gold file exists
     if [ ! -f "$goldfile" ]; then
-        echo "--- Skipping: $filename (no .bin.GOLD file) ---"
-        no_gold_files+=("$filename")
+        echo "  SKIP: $filename (no .bin.GOLD file)"
         ((skip++))
-        echo ""
         continue
     fi
 
@@ -36,18 +31,14 @@ for file in "$PROJECT_DIR"/*.spin2; do
         continue
     fi
 
-    echo "--- Checking: $filename (modified) ---"
     ((checked++))
 
-    # Compile with debug
+    # Compile with debug (suppress output)
     output="$(pnut_ts -d "$file" 2>&1)"
     rc=$?
-    echo "$output"
     if [ $rc -ne 0 ] || echo "$output" | grep -q ":error:"; then
-        echo "  FAIL: Compilation error"
+        echo "  FAIL: $filename (compile error)"
         ((fail++))
-        failed_files+=("$filename (compile error)")
-        echo ""
         continue
     fi
 
@@ -55,38 +46,22 @@ for file in "$PROJECT_DIR"/*.spin2; do
     md5_bin=$(md5 -q "$binfile")
     md5_gold=$(md5 -q "$goldfile")
     if [ "$md5_bin" = "$md5_gold" ]; then
-        echo "  PASS: md5 match ($md5_bin)"
+        echo "  PASS: $filename"
         ((pass++))
     else
-        echo "  FAIL: md5 mismatch"
-        echo "    .bin:      $md5_bin"
-        echo "    .bin.GOLD: $md5_gold"
+        echo "  FAIL: $filename (md5 mismatch)"
+        echo "        .bin:      $md5_bin"
+        echo "        .bin.GOLD: $md5_gold"
         ((fail++))
-        failed_files+=("$filename (md5 mismatch)")
     fi
-    echo ""
 done
 
-echo "=== Results ==="
-echo "  Passed:  $pass"
-echo "  Failed:  $fail"
-echo "  Skipped: $skip"
-if [ ${#no_gold_files[@]} -gt 0 ]; then
-    echo "  Missing .gold files:"
-    for f in "${no_gold_files[@]}"; do
-        echo "    - $f"
-    done
+echo ""
+echo "=== Results: $pass passed, $fail failed, $skip skipped ==="
+if [ $checked -eq 0 ] && [ $skip -eq 0 ]; then
+    echo "  Nothing to check — no .spin2 files newer than their .bin"
 fi
 if [ $fail -gt 0 ]; then
-    echo "  Failed files:"
-    for f in "${failed_files[@]}"; do
-        echo "    - $f"
-    done
     exit 1
-fi
-if [ $checked -eq 0 ] && [ $skip -eq 0 ]; then
-    echo "  No .spin2 files newer than their .bin.GOLD — nothing to check."
-elif [ $fail -eq 0 ] && [ $pass -gt 0 ]; then
-    echo "  All reformatted files produce identical binaries!"
 fi
 exit 0

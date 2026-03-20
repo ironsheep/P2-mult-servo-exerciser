@@ -16,7 +16,7 @@ echo ""
 for file in "$PROJECT_DIR"/*.spin2; do
     filename="$(basename "$file")"
     echo "--- Compiling: $filename ---"
-    output="$(pnut_ts -d "$file" 2>&1)"
+    output="$(pnut_ts -d -l -m "$file" 2>&1)"
     rc=$?
     echo "$output"
     if [ $rc -ne 0 ] || echo "$output" | grep -q ":error:"; then
